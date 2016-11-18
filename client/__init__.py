@@ -2,11 +2,8 @@ import _tkinter
 import tkinter as tk
 from client.forms.login_form import LoginForm
 from common.transmission.secure_channel import establish_secure_channel_to_server
-import bson
-from gevent import monkey, socket
-
-monkey.patch_all()
-bson.patch_socket()
+from common import message
+from pprint import pprint
 
 
 def run():

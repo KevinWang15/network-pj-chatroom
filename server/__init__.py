@@ -3,17 +3,11 @@
 import socket
 from pprint import pprint
 
-import bson
-from gevent import monkey, socket
-
 from common.config import get_config
 from common.cryptography import crypt
-from common.transmission.secure_channel import SecureChannel
+from common.message import MessageType
 from common.transmission.secure_channel import accept_client_to_secure_channel
 from common.util import long_to_bytes
-
-monkey.patch_all()
-bson.patch_socket()
 
 
 def run():
@@ -27,12 +21,9 @@ def run():
     sc = accept_client_to_secure_channel(s)
 
     pprint(sc.recv())
-    sc.send({"a": 1})
+    sc.send(MessageType.query_room_list)
 
     pprint(sc.recv())
-    sc.send({"b": 2})
-
-    pprint(sc.recv())
-    sc.send({"c": 3})
+    sc.send(MessageType.query_room_list, {"b": 2})
 
     pprint(sc.recv())

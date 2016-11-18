@@ -2,7 +2,6 @@ import os
 import math
 import struct
 
-import bson
 from Crypto.Cipher import AES
 import socket
 
@@ -10,6 +9,7 @@ from common.config import get_config
 from common.util import long_to_bytes
 from common.cryptography import crypt
 from pprint import pprint
+from common.message import serialize_message, deserialize_message, MessageType
 
 
 # Format of message transmitted through Secure Channel
@@ -21,10 +21,10 @@ class SecureChannel:
         self.shared_secret = shared_secret
         return
 
-    def send(self, obj):
+    def send(self, MessageType, parameters=None):
         iv1 = bytes(os.urandom(16))
 
-        data_to_encrypt = bson.dumps(obj)
+        data_to_encrypt = serialize_message(MessageType, parameters)
         length_of_message = len(data_to_encrypt)
         padding_n = math.ceil(length_of_message / 16) * 16 - length_of_message
         for i in range(0, padding_n):
@@ -60,7 +60,7 @@ class SecureChannel:
         if padding_n != 0:
             decrypted_data = decrypted_data[0:-padding_n]
 
-        return bson.loads(decrypted_data)
+        return deserialize_message(decrypted_data)
 
 
 def establish_secure_channel_to_server():
@@ -81,9 +81,15 @@ def establish_secure_channel_to_server():
 
     sc = SecureChannel(s, shared_secret)
 
-    # sc.send({'action': 'query_rooms'})
-    # pprint(sc.recv())
-    
+    sc.send(MessageType.query_room_list, {'action': 'BBB'})
+    pprint(sc.recv())
+    sc.send(MessageType.query_room_list, {'action': 'BBB'})
+    pprint(sc.recv())
+    pprint(sc.recv())
+    pprint(sc.recv())
+    pprint(sc.recv())
+    pprint(sc.recv())
+
     return sc
 
 
