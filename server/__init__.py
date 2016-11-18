@@ -8,6 +8,7 @@ from common.cryptography import crypt
 from common.message import MessageType
 from common.transmission.secure_channel import accept_client_to_secure_channel
 from common.util import long_to_bytes
+import select
 
 
 def run():
@@ -18,12 +19,37 @@ def run():
 
     print("Server listening on " + config['server']['bind_ip'] + ":" + str(config['server']['bind_port']))
 
-    sc = accept_client_to_secure_channel(s)
+    connections = []
+    buffered_output = {}
 
-    pprint(sc.recv())
-    sc.send(MessageType.query_room_list)
+    s_to_sc = {}
 
-    pprint(sc.recv())
-    sc.send(MessageType.query_room_list, {"b": 2})
+    while True:
+        rlist, wlist, xlist = select.select(connections + [s], buffered_output.keys(), [])
 
-    pprint(sc.recv())
+        for i in rlist:
+
+            if i == s:
+                # 监听socket为readable，说明有新的客户要连入
+                sc = accept_client_to_secure_channel(s)
+                s_to_sc[sc.socket] = sc
+                connections.append(sc.socket)
+
+                continue
+
+            # 如果不是监听socket，就是旧的客户发消息过来了
+            sc = s_to_sc[i]
+
+            try:
+                data = sc.recv()
+            except socket.error:
+                data = ""
+
+            if data:
+                pprint(data)
+                sc.send(MessageType.query_room_list, {'ack': 1})
+
+            else:
+                # Connection closed
+                i.close()
+                connections.remove(i)

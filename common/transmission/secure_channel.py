@@ -17,6 +17,7 @@ from common.message import serialize_message, deserialize_message, MessageType
 
 class SecureChannel:
     def __init__(self, socket, shared_secret):
+        socket.setblocking(0)
         self.socket = socket
         self.shared_secret = shared_secret
         return
@@ -62,6 +63,9 @@ class SecureChannel:
 
         return deserialize_message(decrypted_data)
 
+    def close(self):
+        self.socket.close()
+
 
 def establish_secure_channel_to_server():
     config = get_config()
@@ -82,13 +86,7 @@ def establish_secure_channel_to_server():
     sc = SecureChannel(s, shared_secret)
 
     sc.send(MessageType.query_room_list, {'action': 'BBB'})
-    pprint(sc.recv())
     sc.send(MessageType.query_room_list, {'action': 'BBB'})
-    pprint(sc.recv())
-    pprint(sc.recv())
-    pprint(sc.recv())
-    pprint(sc.recv())
-    pprint(sc.recv())
 
     return sc
 
