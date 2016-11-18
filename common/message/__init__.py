@@ -12,12 +12,30 @@ from struct import pack, unpack
 # |--VAR_TYPE(1 Byte)--|--DATA_LEN(4 Bytes)--|--DATA--|
 
 class MessageType(Enum):
-    query_room_list = 1
+    set_user_name = 1
+    set_name_successful = 2
+    notify_online_user_list = 3
+    notify_chat_history = 4
+    send_message = 5
+    on_new_message = 6
+    on_user_offline = 7
+    on_user_online = 8
+
+    err_nickname_taken = 101
 
 
 def _get_message_type_from_value(value):
     return {
-        1: MessageType.query_room_list
+        1: MessageType.set_user_name,
+        2: MessageType.set_name_successful,
+        3: MessageType.notify_online_user_list,
+        4: MessageType.notify_chat_history,
+        5: MessageType.send_message,
+        6: MessageType.on_new_message,
+        7: MessageType.on_user_offline,
+        8: MessageType.on_user_online,
+
+        101: MessageType.err_nickname_taken,
     }[value]
 
 

@@ -22,10 +22,9 @@ class SecureChannel:
         self.shared_secret = shared_secret
         return
 
-    def send(self, MessageType, parameters=None):
+    def send(self, message_type, parameters=None):
         iv1 = bytes(os.urandom(16))
-
-        data_to_encrypt = serialize_message(MessageType, parameters)
+        data_to_encrypt = serialize_message(message_type, parameters)
         length_of_message = len(data_to_encrypt)
         padding_n = math.ceil(length_of_message / 16) * 16 - length_of_message
         for i in range(0, padding_n):
@@ -84,9 +83,6 @@ def establish_secure_channel_to_server():
     shared_secret = crypt.get_shared_secret(their_secret)
 
     sc = SecureChannel(s, shared_secret)
-
-    sc.send(MessageType.query_room_list, {'action': 'BBB'})
-    sc.send(MessageType.query_room_list, {'action': 'BBB'})
 
     return sc
 

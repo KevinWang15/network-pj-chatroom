@@ -8,9 +8,9 @@ from pprint import pprint
 
 def run():
     root = tk.Tk()
-
-    login_form = LoginForm(master=root)
-    login_form.mainloop()
+    LoginForm(master=root)
+    root.mainloop()
+    # login_form.mainloop()
 
     try:
         root.destroy()
