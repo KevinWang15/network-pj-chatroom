@@ -20,6 +20,8 @@ class MessageType(Enum):
     on_new_message = 6
     on_user_offline = 7
     on_user_online = 8
+    server_notification = 9
+    chat_history_bundle = 10
 
     err_nickname_taken = 101
 
@@ -34,6 +36,8 @@ def _get_message_type_from_value(value):
         6: MessageType.on_new_message,
         7: MessageType.on_user_offline,
         8: MessageType.on_user_online,
+        9: MessageType.server_notification,
+        10: MessageType.chat_history_bundle,
 
         101: MessageType.err_nickname_taken,
     }[value]

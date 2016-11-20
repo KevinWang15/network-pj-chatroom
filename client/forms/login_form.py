@@ -54,13 +54,14 @@ class LoginForm(tk.Frame):
         master.resizable(width=False, height=False)
         master.geometry('300x140')
         self.create_widgets()
-        self.notification['text'] = "Establishing Secure Connection to Server.."
+        self.notification['text'] = "正在与服务器建立安全连接.."
         self.should_exit = False
+        self.master.title("聊天室")
 
         def establish_connection():
             try:
                 self.sc = establish_secure_channel_to_server()
-                self.notification['text'] = "Established Secure Connection to Server"
+                self.notification['text'] = "已与服务器建立安全连接"
                 self.notification['fg'] = "green"
 
             except ConnectionError:

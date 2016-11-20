@@ -1,3 +1,8 @@
+user_id_mappings = {
+    'sc': {},
+    'nickname': {}
+}
+
 socket_mappings = {
     "user_id": {},
     "nickname": {},
@@ -5,7 +10,7 @@ socket_mappings = {
 }
 
 connections = []
-
+chat_history = []
 user_id_incr = 1
 
 
