@@ -19,11 +19,14 @@
 
 # 安装说明
 Python版本: 3.5
+
 pip install pycrypto # 用于AES加密
 
 # 运行方法
 python run_client.py
+
 python run_server.py
+
 （一次只能运行一个server，但可以运行N个client）
 
 # 配置文件
