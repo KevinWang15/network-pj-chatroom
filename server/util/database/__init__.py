@@ -48,7 +48,6 @@ def get_friends(user_id):
 
 
 def is_friend_with(from_user_id, to_user_id):
-    pprint(['judging', from_user_id, to_user_id])
     c = get_cursor()
     r = c.execute('SELECT 1 FROM friends WHERE from_user_id=? AND to_user_id=? AND accepted=1',
                   [from_user_id, to_user_id]).fetchall()

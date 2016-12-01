@@ -5,6 +5,7 @@ from common.message import MessageType
 import datetime
 import time
 import client.memory
+import struct
 
 callback_funcs = []
 
@@ -13,18 +14,55 @@ message_listeners = []
 
 
 def gen_last_message(obj):
+    # TODO: 群聊显示昵称
     # type 0 - 文字消息 1 - 图片消息
+
+    prefix = ''
     if obj['type'] == 0:
-        return obj['data'].replace('\n', ' ')
+        return prefix + obj['data'].replace('\n', ' ')
+    if obj['type'] == 1:
+        return prefix + '[图片消息]'
 
 
-def socket_listener_thred(sc, tk_root):
+def socket_listener_thread(sc, tk_root):
+    bytes_to_receive = 0
+    bytes_received = 0
+    data_buffer = bytes()
     while True:
         rlist, wlist, xlist = select.select([sc.socket], [sc.socket], [])
         if len(rlist):
-            data = sc.recv()
-            pprint(['new socket data:', data])
-            if data:
+
+            if bytes_to_receive == 0 and bytes_received == 0:
+                # 一次新的接收
+                conn_ok = True
+                first_4_bytes = ''
+                try:
+                    first_4_bytes = sc.socket.recv(4)
+                except ConnectionError:
+                    conn_ok = False
+
+                if first_4_bytes == "" or len(first_4_bytes) < 4:
+                    conn_ok = False
+
+                if not conn_ok:
+                    print('服务器已被关闭')
+                    # messagebox.showerror("出错了", "服务器已经被关闭")
+                    tk_root.destroy()
+                else:
+                    data_buffer = bytes()
+                    bytes_to_receive = struct.unpack('L', first_4_bytes)[0] + 16 + 1
+
+            # 接收数据、拼成块
+            buffer = sc.socket.recv(bytes_to_receive - bytes_received)
+            data_buffer += buffer
+            bytes_received += len(buffer)
+
+            if bytes_received == bytes_to_receive:
+                # 当一个数据包接收完毕
+                bytes_to_receive = 0
+                bytes_received = 0
+
+                data = sc.on_data(data_buffer)
                 # 处理general failure
                 if data['type'] == MessageType.general_failure:
                     messagebox.showerror("出错了", data['parameters'])
@@ -34,11 +72,11 @@ def socket_listener_thred(sc, tk_root):
                     messagebox.showerror("出错了", '您的账户在别处登入')
                     client.memory.tk_root.destroy()
 
+                if data['type'] == MessageType.server_echo:
+                    pprint(['server echo', data['parameters']])
+
                 # 处理on_new_message
                 if data['type'] == MessageType.on_new_message:
-                    # time = datetime.datetime.fromtimestamp(
-                    #     int(data['parameters']['time']) / 1000
-                    # ).strftime('%Y-%m-%d %H:%M:%S')
 
                     # 放入 chat_history
                     if data['parameters']['target_id'] not in client.memory.chat_history[0]:
@@ -70,14 +108,8 @@ def socket_listener_thred(sc, tk_root):
                                 data['parameters']['target_id']:
                             item['func'](data['parameters'])
 
-                    pprint(client.memory.chat_history)
-
                 for func in callback_funcs:
                     func(data)
-            else:
-                print('服务器已被关闭')
-                # messagebox.showerror("出错了", "服务器已经被关闭")
-                tk_root.destroy()
 
 
 def add_listener(func):

@@ -7,5 +7,5 @@ from server.util import database
 
 
 def run(sc, parameters):
-    pprint(['client echo', parameters])
+    # pprint(['client echo', parameters])
     sc.send(MessageType.server_echo, parameters)

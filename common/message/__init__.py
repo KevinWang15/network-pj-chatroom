@@ -62,6 +62,7 @@ VAR_TYPE = {
     4: 'list',
     5: 'dict',
     6: 'bool',
+    7: 'bytearray',
 }
 
 VAR_TYPE_INVERSE = {
@@ -71,6 +72,7 @@ VAR_TYPE_INVERSE = {
     'list': 4,
     'dict': 5,
     'bool': 6,
+    'bytearray': 7
 }
 
 
@@ -92,6 +94,10 @@ def _serialize_float(float):
 def _serialize_str(str):
     body = str.encode()
     return bytes([VAR_TYPE_INVERSE['str']]) + pack('L', len(body)) + body
+
+
+def _serialize_bytes(body):
+    return bytes([VAR_TYPE_INVERSE['bytearray']]) + pack('L', len(body)) + body
 
 
 def _serialize_list(list):
@@ -121,7 +127,7 @@ def _serialize_dict(dict):
 
 
 _serialize_by_type = [None, _serialize_int, _serialize_float, _serialize_str, _serialize_list, _serialize_dict,
-                      _serialize_bool]
+                      _serialize_bool, _serialize_bytes]
 
 
 def _serialize_any(obj):
@@ -151,6 +157,10 @@ def _deserialize_float(bytes):
 
 def _deserialize_str(bytes):
     return bytes.decode()
+
+
+def _deserialize_bytes(body):
+    return bytearray(body)
 
 
 def _deserialize_list(bytes):
@@ -183,7 +193,7 @@ def _deserialize_dict(bytes):
 
 
 _deserialize_by_type = [None, _deserialize_int, _deserialize_float, _deserialize_str, _deserialize_list,
-                        _deserialize_dict, _deserialize_bool]
+                        _deserialize_dict, _deserialize_bool, _deserialize_bytes]
 
 
 def _deserialize_any(bytes):

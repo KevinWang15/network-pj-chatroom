@@ -112,7 +112,6 @@ class ContactsForm(tk.Frame):
             ).strftime('%Y-%m-%d %H:%M:%S')
 
             contact.last_message_time.config(text=time_message)
-            pprint(item)
 
             contact.last_message.config(text=client.memory.last_message[item['type']].get(item['id'], '(没有消息)'))
             contact.last_message_time.config(text=datetime.datetime.fromtimestamp(

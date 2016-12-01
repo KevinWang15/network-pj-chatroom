@@ -11,7 +11,7 @@ import time
 # {target_type:int(0=私聊 1=群聊),target_id:int,message:str}
 
 def run(sc, parameters):
-    pprint(parameters)
+    # pprint(parameters)
     user_id = sc_to_user_id[sc]
     sender = database.get_user(user_id)
 

@@ -6,6 +6,7 @@ from client.util.socket_listener import *
 from tkinter.scrolledtext import ScrolledText
 from tkinter import colorchooser
 from tkinter import simpledialog
+from tkinter import filedialog
 
 
 class SingleChatForm(tk.Frame):
@@ -36,6 +37,8 @@ class SingleChatForm(tk.Frame):
             self.chat_box.tag_config('new' + str(self.tag_i), foreground=data['message']['fontcolor'],
                                      font=(None, data['message']['fontsize']))
             self.append_to_chat_box(data['message']['data'].replace('\n', '\n  ') + '\n', 'new' + str(self.tag_i))
+        if data['message']['type'] == 1:
+            pprint(data['message'])
 
     def __init__(self, target_user, master=None):
         super().__init__(master)
@@ -99,7 +102,6 @@ class SingleChatForm(tk.Frame):
 
     def send_message(self, _=None):
         message = self.input_textbox.get("1.0", END)
-        pprint(message.strip)
         if not message or message.replace(" ", "").replace("\r", "").replace("\n", "") == '':
             return
         self.sc.send(MessageType.send_message,
@@ -130,4 +132,12 @@ class SingleChatForm(tk.Frame):
         self.input_textbox.tag_add('new', '1.0', END)
 
     def send_image(self):
-        pprint('1')
+        filename = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg;*.gif;*.png")])
+        if filename is None or filename == '':
+            return
+        with open(filename, "rb") as imageFile:
+            f = imageFile.read()
+            b = bytearray(f)
+
+            self.sc.send(MessageType.send_message,
+                         {'target_type': 0, 'target_id': self.target_user['id'], 'message': {'type': 1, 'data': b}})

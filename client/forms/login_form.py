@@ -18,6 +18,9 @@ class LoginForm(tk.Frame):
         client.util.socket_listener.remove_listener(self.socket_listener)
         self.master.destroy()
 
+    def destroy_window(self):
+        client.memory.tk_root.destroy()
+
     def socket_listener(self, data):
         if data['type'] == MessageType.login_failed:
             messagebox.showerror('登入失败', '登入失败，请检查用户名密码')
@@ -61,7 +64,7 @@ class LoginForm(tk.Frame):
         self.master.title("聊天室")
 
         self.sc = client.memory.sc
-        self.sc.send(MessageType.client_echo, 0)
+        # self.sc.send(MessageType.client_echo, 0)
         client.util.socket_listener.add_listener(self.socket_listener)
 
     def do_login(self):

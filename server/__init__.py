@@ -10,6 +10,7 @@ from server.broadcast import broadcast
 import select
 from server.util import database
 from pprint import pprint
+import struct
 
 
 def run():
@@ -19,6 +20,10 @@ def run():
     s.listen(1)
 
     print("Server listening on " + config['server']['bind_ip'] + ":" + str(config['server']['bind_port']))
+
+    bytes_to_receive = {}
+    bytes_received = {}
+    data_buffer = {}
 
     while True:
         rlist, wlist, xlist = select.select(list(map(lambda x: x.socket, scs)) + [s], [], [])
@@ -30,31 +35,53 @@ def run():
                 sc = accept_client_to_secure_channel(s)
                 socket_to_sc[sc.socket] = sc
                 scs.append(sc)
+                bytes_to_receive[sc] = 0
+                bytes_received[sc] = 0
+                data_buffer[sc] = bytes()
                 continue
 
             # 如果不是监听socket，就是旧的客户发消息过来了
             sc = socket_to_sc[i]
-            pprint(sc)
 
-            try:
-                data = sc.recv()
-            except socket.error:
-                data = ""
+            if bytes_to_receive[sc] == 0 and bytes_received[sc] == 0:
+                # 一次新的接收
+                conn_ok = True
+                first_4_bytes = ''
+                try:
+                    first_4_bytes = sc.socket.recv(4)
+                except ConnectionError:
+                    conn_ok = False
 
-            if data:
+                if first_4_bytes == "" or len(first_4_bytes) < 4:
+                    conn_ok = False
+
+                if not conn_ok:
+                    sc.close()
+
+                    # 通知他的好友他下线了
+                    if sc in sc_to_user_id:
+                        user_id = sc_to_user_id[sc]
+                        frs = database.get_friends(user_id)
+                        for fr in frs:
+                            if fr['id'] in user_id_to_sc:
+                                user_id_to_sc[fr['id']].send(MessageType.friend_on_off_line, [False, user_id])
+
+                    # 把他的连接信息移除
+                    remove_sc_from_socket_mapping(sc)
+
+                else:
+                    data_buffer[sc] = bytes()
+                    bytes_to_receive[sc] = struct.unpack('L', first_4_bytes)[0] + 16 + 1
+
+            buffer = sc.socket.recv(bytes_to_receive[sc] - bytes_received[sc])
+            data_buffer[sc] += buffer
+            bytes_received[sc] += len(buffer)
+
+            if bytes_received[sc] == bytes_to_receive[sc] and bytes_received[sc] != 0:
+                # 当一个数据包接收完毕
+                bytes_to_receive[sc] = 0
+                bytes_received[sc] = 0
+
+                data = sc.on_data(data_buffer[sc])
                 handle_event(sc, data['type'], data['parameters'])
-
-            else:
-                # Connection closed
-                sc.close()
-
-                # 通知他的好友他下线了
-                if sc in sc_to_user_id:
-                    user_id = sc_to_user_id[sc]
-                    frs = database.get_friends(user_id)
-                    for fr in frs:
-                        if fr['id'] in user_id_to_sc:
-                            user_id_to_sc[fr['id']].send(MessageType.friend_on_off_line, [False, user_id])
-
-                # 把他的连接信息移除
-                remove_sc_from_socket_mapping(sc)
+                data_buffer[sc] = bytes()

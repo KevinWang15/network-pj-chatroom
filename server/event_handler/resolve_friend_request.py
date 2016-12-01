@@ -15,7 +15,6 @@ def run(sc, parameters):
     c = database.get_cursor()
     r = c.execute('SELECT 1 from friends where from_user_id=? and to_user_id=? and accepted=0', [uid, user_id])
     rows = r.fetchall()
-    pprint(accepted)
     if len(rows) == 0:
         return
 

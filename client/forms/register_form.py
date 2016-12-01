@@ -51,7 +51,6 @@ class RegisterForm(tk.Frame):
         self.master = master
         self.sc = client.memory.sc
 
-        pprint(self.sc)
 
         master.resizable(width=False, height=False)
         master.geometry('190x140')

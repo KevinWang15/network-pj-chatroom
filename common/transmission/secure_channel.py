@@ -7,8 +7,9 @@ from Crypto.Cipher import AES
 
 from common.config import get_config
 from common.cryptography import crypt
-from common.message import serialize_message, deserialize_message
+from common.message import serialize_message, deserialize_message, ByteArrayReader
 from common.util import long_to_bytes
+from pprint import pprint
 
 
 # Format of message transmitted through Secure Channel
@@ -33,31 +34,35 @@ class SecureChannel:
         encrypted_message = encryption_suite.encrypt(data_to_encrypt)
         length_of_encrypted_message = len(encrypted_message)
 
+        # pprint([length_of_encrypted_message,
+        #         struct.pack('L', length_of_encrypted_message), bytes([padding_n]), iv1, encrypted_message])
+        # pprint(['sending', self.socket, message_type, parameters])
+
         self.socket.send(
             struct.pack('L', length_of_encrypted_message) + bytes([padding_n]) + iv1 + encrypted_message)
         return
 
-    def recv(self):
+    def on_data(self, data_array):
+        # 用select循环socket.recv，当收到一个完整的数据块后（收到后length_of_encrypted_message+1+16个字节后），
+        # 把 bytes([padding_n]) + iv1 + encrypted_message 传给本函数
+        br = ByteArrayReader(data_array)
 
-        # 客户端断开连接时，预防服务器端抛出错误
-        try:
-            first_4_bytes = self.socket.recv(4)
-        except ConnectionError:
-            return
+        # pprint(['recv', 'first_4_bytes', first_4_bytes, length_of_encrypted_message])
+        padding_n = br.read(1)[0]
+        # pprint(['recv', 'padding_n', padding_n])
 
-        if first_4_bytes == "" or len(first_4_bytes) < 4:
-            return
-
-        length_of_encrypted_message = struct.unpack('L', first_4_bytes)[0]
-        padding_n = self.socket.recv(1)[0]
-        iv = self.socket.recv(16)
-        data = self.socket.recv(length_of_encrypted_message)
+        iv = br.read(16)
+        # pprint(['recv', 'iv', iv])
+        # incomplete
+        bytes_received = 0
+        data = br.read_to_end()
 
         decryption_suite = AES.new(self.shared_secret, AES.MODE_CBC, iv)
         decrypted_data = decryption_suite.decrypt(data)
 
         if padding_n != 0:
             decrypted_data = decrypted_data[0:-padding_n]
+        # pprint(['recv', 'decrypted_data', decrypted_data])
 
         return deserialize_message(decrypted_data)
 
