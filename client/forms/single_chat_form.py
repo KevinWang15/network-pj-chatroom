@@ -7,6 +7,9 @@ from tkinter.scrolledtext import ScrolledText
 from tkinter import colorchooser
 from tkinter import simpledialog
 from tkinter import filedialog
+from PIL import Image, ImageTk
+from io import BytesIO
+import binascii
 
 
 class SingleChatForm(tk.Frame):
@@ -38,7 +41,10 @@ class SingleChatForm(tk.Frame):
                                      font=(None, data['message']['fontsize']))
             self.append_to_chat_box(data['message']['data'].replace('\n', '\n  ') + '\n', 'new' + str(self.tag_i))
         if data['message']['type'] == 1:
-            pprint(data['message'])
+            pprint(['img crc', binascii.crc32(data['message']['data'])])
+            client.memory.tk_img_ref.append(ImageTk.PhotoImage(data=data['message']['data']))
+            self.chat_box.image_create(END, image=client.memory.tk_img_ref[-1])
+            self.append_to_chat_box('\n', '')
 
     def __init__(self, target_user, master=None):
         super().__init__(master)

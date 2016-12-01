@@ -22,6 +22,8 @@ Python版本: 3.5
 
 pip install pycrypto # 用于AES加密
 
+pip install Pillow # 支持JPG等格式图片的发送
+
 # 运行方法
 python run_client.py
 
