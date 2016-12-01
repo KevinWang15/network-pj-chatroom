@@ -1,6 +1,3 @@
-# 预览图
-![preview](preview.png)
-
 # 功能
 - [x] Diffie-Hellman 密钥交换安全传输（启动时第一件事）
 - [x] 用AES加密所有的传输内容
@@ -56,3 +53,95 @@ server和client共用```config.json```
     }
 ```
 大多都容易理解，需要注意的是```crypto```部分，这里的```base```和```modulus```是Diffie-Hellman密钥交换时用到的，应该为两个大素数。
+
+# 文件目录
+```
+│  config.json
+│  README.md
+│  run_client.py
+│  run_server.py
+│
+├─client
+│  │  __init__.py
+│  │
+│  ├─components
+│  │      contact_item.py
+│  │      vertical_scrolled_frame.py
+│  │      __init__.py
+│  │
+│  ├─forms
+│  │      boilerplate.txt
+│  │      chat_form.py
+│  │      contacts_form.py
+│  │      login_form.py
+│  │      register_form.py
+│  │      __init__.py
+│  │
+│  ├─memory
+│  │      __init__.py
+│  │
+│  └─util
+│      │  __init__.py
+│      │
+│      └─socket_listener
+│              __init__.py
+│
+├─common
+│  │  config.py
+│  │  global_vars.py
+│  │  __init__.py
+│  │
+│  ├─cryptography
+│  │      crypt.py
+│  │      prime.py
+│  │      __init__.py
+│  │
+│  ├─message
+│  │      __init__.py
+│  │
+│  ├─transmission
+│  │      secure_channel.py
+│  │      __init__.py
+│  │
+│  └─util
+│          __init__.py
+│
+└─server
+    │  database.db
+    │  main.sql
+    │  __init__.py
+    │
+    ├─broadcast
+    │      __init__.py
+    │
+    ├─event_handler
+    │      add_friend.py
+    │      client_echo.py
+    │      create_room.py
+    │      join_room.py
+    │      login.py
+    │      query_room_users.py
+    │      register.py
+    │      resolve_friend_request.py
+    │      send_message.py
+    │      __init__.py
+    │
+    ├─memory
+    │      __init__.py
+    │
+    └─util
+        │  __init__.py
+        │
+        └─database
+                __init__.py
+```
+
+# 预览图
+![1](preview_imgs/1.png)
+![2](preview_imgs/2.png)
+![3](preview_imgs/3.png)
+![4](preview_imgs/4.png)
+![5](preview_imgs/5.png)
+![6](preview_imgs/6.png)
+![7](preview_imgs/7.png)
+![8](preview_imgs/8.png)
