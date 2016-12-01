@@ -18,9 +18,11 @@ def gen_last_message(obj):
     # type 0 - 文字消息 1 - 图片消息
 
     prefix = ''
-    if obj['type'] == 0:
-        return prefix + obj['data'].replace('\n', ' ')
-    if obj['type'] == 1:
+    if obj['target_type'] == 1:
+        prefix = obj['sender_name'] + ':'
+    if obj['message']['type'] == 0:
+        return prefix + obj['message']['data'].replace('\n', ' ')
+    if obj['message']['type'] == 1:
         return prefix + '[图片消息]'
 
 
@@ -82,25 +84,34 @@ def socket_listener_thread(sc, tk_root):
                 if data['type'] == MessageType.on_new_message:
 
                     # 放入 chat_history
-                    if data['parameters']['target_id'] not in client.memory.chat_history[data['parameters']['target_type']]:
-                        client.memory.chat_history[data['parameters']['target_type']][data['parameters']['target_id']] = []
+                    if data['parameters']['target_id'] not in client.memory.chat_history[
+                        data['parameters']['target_type']]:
+                        client.memory.chat_history[data['parameters']['target_type']][
+                            data['parameters']['target_id']] = []
 
-                    client.memory.chat_history[data['parameters']['target_type']][data['parameters']['target_id']].append(data['parameters'])
+                    client.memory.chat_history[data['parameters']['target_type']][
+                        data['parameters']['target_id']].append(data['parameters'])
 
                     # 更新 last_message
-                    client.memory.last_message[data['parameters']['target_type']][data['parameters']['target_id']] = gen_last_message(
-                        data['parameters']['message'])
+                    client.memory.last_message[data['parameters']['target_type']][
+                        data['parameters']['target_id']] = gen_last_message(
+                        data['parameters'])
 
                     # 更新 last_message_timestamp
-                    client.memory.last_message_timestamp[data['parameters']['target_type']][data['parameters']['target_id']] = data['parameters'][
+                    client.memory.last_message_timestamp[data['parameters']['target_type']][
+                        data['parameters']['target_id']] = data['parameters'][
                         'time']
 
                     # 更新 unread_message_count
-                    if data['parameters']['target_id'] not in client.memory.unread_message_count[data['parameters']['target_type']]:
-                        client.memory.unread_message_count[data['parameters']['target_type']][data['parameters']['target_id']] = 0
+                    if data['parameters']['target_id'] not in client.memory.unread_message_count[
+                        data['parameters']['target_type']]:
+                        client.memory.unread_message_count[data['parameters']['target_type']][
+                            data['parameters']['target_id']] = 0
 
-                    if data['parameters']['target_id'] not in client.memory.window_instance[data['parameters']['target_type']]:
-                        client.memory.unread_message_count[data['parameters']['target_type']][data['parameters']['target_id']] += 1
+                    if data['parameters']['target_id'] not in client.memory.window_instance[
+                        data['parameters']['target_type']]:
+                        client.memory.unread_message_count[data['parameters']['target_type']][
+                            data['parameters']['target_id']] += 1
 
                     # 更新contacts
                     client.memory.contact_window[0].refresh_contacts()
