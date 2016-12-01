@@ -34,12 +34,13 @@ class ContactItem(Frame):
         self.last_message = Label(self.message_frame, text="recent message", font=('', 9), fg='#666', bg='white')
         self.last_message.pack(side=LEFT, fill=X, expand=True, anchor=W)
 
-
         # propagate click event to parent..
         self.title.bind("<Button>", handle_on_click)
         self.last_message_time.bind("<Button>", handle_on_click)
         self.last_message.bind("<Button>", handle_on_click)
         self.unread_message_count.bind("<Button>", handle_on_click)
+        self.message_frame.bind("<Button>", handle_on_click)
+        self.title_frame.bind("<Button>", handle_on_click)
 
         self.pack()
         return

@@ -3,6 +3,7 @@ from tkinter import *
 
 import client.memory
 from client.util.socket_listener import *
+from tkinter.scrolledtext import ScrolledText
 
 
 class SingleChatForm(tk.Frame):
@@ -19,10 +20,10 @@ class SingleChatForm(tk.Frame):
         time = datetime.datetime.fromtimestamp(
             int(data['time']) / 1000
         ).strftime('%Y-%m-%d %H:%M:%S')
-        self.append_to_chat_box(data['sender_name'] + "   " + time + '\n  ',
+        self.append_to_chat_box(data['sender_name'] + "  " + time + '\n  ',
                                 ('me' if client.memory.current_user['id'] == data[
                                     'sender_id'] else 'them'))
-        message = data['message']
+        message = data['message'].replace('\n', '\n  ')
         self.append_to_chat_box(message + '\n', 'message')
 
     def __init__(self, target_user, master=None):
@@ -33,21 +34,33 @@ class SingleChatForm(tk.Frame):
         client.memory.contact_window[0].refresh_contacts()
         master.resizable(width=True, height=True)
         master.geometry('660x500')
-        master.minsize(460, 300)
+        master.minsize(520, 370)
         self.master.title(target_user['nickname'])
 
-        self.input_text = tk.StringVar()
-        self.input_textbox = tk.Entry(self, textvariable=self.input_text)
-        self.input_textbox.pack(side=BOTTOM, fill=X, expand=False, padx=(0, 0), pady=(0, 0))
-        self.input_textbox.bind("<Return>", self.send_message)
+        self.input_frame = tk.Frame(self, bg='white')
 
-        self.chat_box = tk.Text(self, bg='#f6f6f6')
-        self.chat_box.pack(side=TOP, fill=BOTH, expand=True)
+        self.input_textbox = ScrolledText(self, height=10)
+        self.input_textbox.bind("<Control-Return>", self.send_message)
+
+        self.send_btn = tk.Button(self.input_frame, text='发送消息(Ctrl+Enter)', command=self.send_message)
+        self.send_btn.pack(side=RIGHT, expand=False)
+
+        self.font_btn = tk.Button(self.input_frame, text='修改字体')
+        self.font_btn.pack(side=LEFT, expand=False)
+
+        self.image_btn = tk.Button(self.input_frame, text='发送图片')
+        self.image_btn.pack(side=LEFT, expand=False)
+
+        self.chat_box = ScrolledText(self, bg='#f6f6f6')
+        self.input_frame.pack(side=BOTTOM, fill=X, expand=False)
+        self.input_textbox.pack(side=BOTTOM, fill=X, expand=False, padx=(0, 0), pady=(0, 0))
+        self.chat_box.pack(side=BOTTOM, fill=BOTH, expand=True)
         self.chat_box.bind("<Key>", lambda e: "break")
-        self.chat_box.tag_config("me", foreground="green", lmargin1='10', spacing1='5')
-        self.chat_box.tag_config("them", foreground="blue", lmargin1='10', spacing1='5')
-        self.chat_box.tag_config("message", foreground="black", lmargin1='14', lmargin2='14', spacing1='5')
-        self.chat_box.tag_config("system", foreground="grey", lmargin1='10', lmargin2='10', spacing1='5',
+        self.chat_box.tag_config("default", lmargin1=10, lmargin2=10, rmargin=10)
+        self.chat_box.tag_config("me", foreground="green", spacing1='5')
+        self.chat_box.tag_config("them", foreground="blue", spacing1='5')
+        self.chat_box.tag_config("message", foreground="black", spacing1='0')
+        self.chat_box.tag_config("system", foreground="grey", spacing1='0',
                                  justify='center',
                                  font=("Times New Roman", 8))
 
@@ -65,15 +78,16 @@ class SingleChatForm(tk.Frame):
             self.append_to_chat_box('- 以上是历史消息 -\n', 'system')
 
     def append_to_chat_box(self, message, tags):
-        self.chat_box.insert(tk.END, message, tags)
+        self.chat_box.insert(tk.END, message, [tags, 'default'])
         self.chat_box.update()
         self.chat_box.see(tk.END)
 
     def send_message(self, _=None):
-        message = self.input_text.get()
-        if not message:
+        message = self.input_textbox.get("1.0", END)
+        pprint(message.strip)
+        if not message or message.replace(" ", "").replace("\r", "").replace("\n", "") == '':
             return
         self.sc.send(MessageType.send_message,
-                     {'target_type': 0, 'target_id': self.target_user['id'], 'message': message})
-        self.input_text.set("")
+                     {'target_type': 0, 'target_id': self.target_user['id'], 'message': message.strip().strip('\n')})
+        self.input_textbox.delete("1.0", END)
         return 'break'
