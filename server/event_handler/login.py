@@ -46,8 +46,18 @@ def run(sc, parameters):
         if fr['id'] in user_id_to_sc:
             user_id_to_sc[fr['id']].send(MessageType.friend_on_off_line, [True, user_id])
 
+    # 通知群聊里的人他上线了
+    # [room_id, user_id, online]
+    rooms_id = database.get_user_rooms_id(user_id)
+    for room_id in rooms_id:
+        users_id = database.get_room_members_id(room_id)
+        for _user_id in users_id:
+            if _user_id in user_id_to_sc and user_id != _user_id:
+                user_id_to_sc[_user_id].send(MessageType.room_user_on_off_line,
+                                             [room_id, user_id, True])
+
     # 发送群列表
-    rms = database.get_rooms(user_id)
+    rms = database.get_user_rooms(user_id)
 
     for rm in rms:
         sc.send(MessageType.contact_info, add_target_type(rm, 1))

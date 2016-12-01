@@ -47,13 +47,23 @@ def get_friends(user_id):
     return users
 
 
-def get_rooms(user_id):
+def get_user_rooms(user_id):
     c = get_cursor()
     rooms = []
     rows = c.execute('SELECT room_id FROM room_user WHERE user_id=?', [user_id]).fetchall()
     for row in rows:
         room_id = row[0]
         rooms.append(get_room(room_id))
+    return rooms
+
+
+def get_user_rooms_id(user_id):
+    c = get_cursor()
+    rooms = []
+    rows = c.execute('SELECT room_id FROM room_user WHERE user_id=?', [user_id]).fetchall()
+    for row in rows:
+        room_id = row[0]
+        rooms.append(room_id)
     return rooms
 
 
@@ -91,3 +101,10 @@ def add_to_room(user_id, room_id):
 def get_room_members_id(room_id):
     return list(map(lambda x: x[0], get_cursor().execute('SELECT user_id FROM room_user WHERE room_id=?',
                                                          [room_id]).fetchall()))
+
+
+def get_room_members(room_id):
+    # [id, nickname, online, username]
+    return list(map(lambda x: [x[0], x[1], x[0] in user_id_to_sc, x[2]], get_cursor().execute(
+        'SELECT user_id,nickname,username FROM room_user LEFT JOIN users ON users.id=user_id WHERE room_id=?',
+        [room_id]).fetchall()))

@@ -59,7 +59,6 @@ class ContactsForm(tk.Frame):
     def on_frame_click(self, e):
         item_id = e.widget.item['id']
         if item_id in client.memory.window_instance[e.widget.item['type']]:
-            # pprint(client.memory.window_instance[0][item_id])
             client.memory.window_instance[e.widget.item['type']][item_id].master.deiconify()
             return
         form = Toplevel(client.memory.tk_root, takefocus=True)
@@ -82,6 +81,23 @@ class ContactsForm(tk.Frame):
         if (not result):
             return
         self.sc.send(MessageType.create_room, result)
+
+    class my_event:
+        widget = None
+
+        def __init__(self, widget):
+            self.widget = widget
+
+    def try_open_user_id(self, id, name, username):
+
+        for i in range(0, len(self.pack_objs)):
+            frame = self.pack_objs[i]
+            if frame.item['id'] == id and frame.item['type'] == 0:
+                self.on_frame_click(self.my_event(frame))
+                return
+        result = messagebox.askyesno("是否加好友", name + "不在您的好友列表中，是否加好友？")
+        if result:
+            self.sc.send(MessageType.add_friend, username)
 
     pack_objs = []
 

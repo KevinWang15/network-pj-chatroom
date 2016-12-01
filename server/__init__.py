@@ -58,13 +58,24 @@ def run():
                 if not conn_ok:
                     sc.close()
 
-                    # 通知他的好友他下线了
                     if sc in sc_to_user_id:
                         user_id = sc_to_user_id[sc]
+                        # 通知他的好友他下线了
+
                         frs = database.get_friends(user_id)
                         for fr in frs:
                             if fr['id'] in user_id_to_sc:
                                 user_id_to_sc[fr['id']].send(MessageType.friend_on_off_line, [False, user_id])
+
+                        # 通知群聊里的人
+                        # [room_id, user_id, online]
+                        rooms_id = database.get_user_rooms_id(user_id)
+                        for room_id in rooms_id:
+                            users_id = database.get_room_members_id(room_id)
+                            for _user_id in users_id:
+                                if _user_id in user_id_to_sc and user_id != _user_id:
+                                    user_id_to_sc[_user_id].send(MessageType.room_user_on_off_line,
+                                                                 [room_id, user_id, False])
 
                     # 把他的连接信息移除
                     remove_sc_from_socket_mapping(sc)

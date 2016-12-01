@@ -9,23 +9,54 @@ from tkinter import simpledialog
 from tkinter import filedialog
 from PIL import Image, ImageTk
 from io import BytesIO
+from client.util import socket_listener
 import binascii
 
 
 class ChatForm(tk.Frame):
     font_color = "#000000"
     font_size = 10
-
+    user_list = []
     tag_i = 0
 
     def remove_listener_and_close(self):
         remove_message_listener(self.message_listener)
+        client.util.socket_listener.remove_listener(self.socket_listener)
         self.master.destroy()
         if self.target['id'] in client.memory.window_instance[self.target['type']]:
             del client.memory.window_instance[self.target['type']][self.target['id']]
 
     def message_listener(self, data):
         self.digest_message(data)
+
+    def socket_listener(self, data):
+        if data['type'] == MessageType.query_room_users_result:
+            if data['parameters'][1] != self.target['id']:
+                return
+            # [id, nickname, online, username]
+            self.user_list = data['parameters'][0]
+            self.refresh_user_listbox()
+
+        if data['type'] == MessageType.room_user_on_off_line:
+            # [room_id, user_id, online]
+            if data['parameters'][0] != self.target['id']:
+                return
+            pprint(data['parameters'])
+            for i in range(0, len(self.user_list)):
+                if self.user_list[i][0] == data['parameters'][1]:
+                    self.user_list[i][2] = data['parameters'][2]
+
+            self.refresh_user_listbox()
+
+    def refresh_user_listbox(self):
+        # [id, nickname, online, username]
+        self.user_listbox.delete(0, END)
+        pprint(self.user_list)
+        self.user_list.sort(key=lambda x: x[2])
+
+        for user in self.user_list:
+            self.user_listbox.insert(0, user[1] + ("(在线)" if user[2] else "(离线)"))
+            self.user_listbox.itemconfig(0, {'fg': ("green" if user[2] else "#999")})
 
     def digest_message(self, data):
         time = datetime.datetime.fromtimestamp(
@@ -46,25 +77,50 @@ class ChatForm(tk.Frame):
             self.chat_box.image_create(END, image=client.memory.tk_img_ref[-1])
             self.append_to_chat_box('\n', '')
 
+    def user_listbox_double_click(self, _):
+        if len(self.user_listbox.curselection()) == 0:
+            return None
+        index = self.user_listbox.curselection()[0]
+        selected_user_id = self.user_list[len(self.user_list) - 1 - index][0]
+        selected_user_nickname = self.user_list[len(self.user_list) - 1 - index][1]
+        selected_user_username = self.user_list[len(self.user_list) - 1 - index][3]
+        if selected_user_id == client.memory.current_user['id']:
+            return
+        client.memory.contact_window[0].try_open_user_id(selected_user_id, selected_user_nickname,
+                                                         selected_user_username)
+        # pprint(selected_user_id)
+        return
+
     def __init__(self, target, master=None):
         super().__init__(master)
         self.master = master
         self.target = target
+        client.util.socket_listener.add_listener(self.socket_listener)
         client.memory.unread_message_count[self.target['type']][self.target['id']] = 0
         client.memory.contact_window[0].refresh_contacts()
         master.resizable(width=True, height=True)
         master.geometry('660x500')
         master.minsize(520, 370)
+        self.sc = client.memory.sc
 
         if self.target['type'] == 0:
             self.master.title(self.target['nickname'])
 
         if self.target['type'] == 1:
             self.master.title("群:" + str(self.target['id']) + " " + self.target['room_name'])
+            self.sc.send(MessageType.query_room_users, self.target['id'])
 
-        self.input_frame = tk.Frame(self, bg='white')
+        self.right_frame = tk.Frame(self, bg='white')
 
-        self.input_textbox = ScrolledText(self, height=10)
+        self.user_listbox = tk.Listbox(self, bg='#EEE')
+        self.user_listbox.bind('<Double-Button-1>', self.user_listbox_double_click)
+        if self.target['type'] == 1:
+            self.user_listbox.pack(side=LEFT, expand=False, fill=BOTH)
+        self.right_frame.pack(side=LEFT, expand=True, fill=BOTH)
+
+        self.input_frame = tk.Frame(self.right_frame, bg='white')
+
+        self.input_textbox = ScrolledText(self.right_frame, height=10)
         self.input_textbox.bind("<Control-Return>", self.send_message)
         self.input_textbox.bind_all('<Key>', self.apply_font_change)
 
@@ -80,7 +136,7 @@ class ChatForm(tk.Frame):
         self.image_btn = tk.Button(self.input_frame, text='发送图片', command=self.send_image)
         self.image_btn.pack(side=LEFT, expand=False)
 
-        self.chat_box = ScrolledText(self, bg='white')
+        self.chat_box = ScrolledText(self.right_frame, bg='white')
         self.input_frame.pack(side=BOTTOM, fill=X, expand=False)
         self.input_textbox.pack(side=BOTTOM, fill=X, expand=False, padx=(0, 0), pady=(0, 0))
         self.chat_box.pack(side=BOTTOM, fill=BOTH, expand=True)
@@ -95,7 +151,6 @@ class ChatForm(tk.Frame):
 
         self.pack(expand=True, fill=BOTH)
 
-        self.sc = client.memory.sc
         add_message_listener(self.target['type'], self.target['id'], self.message_listener)
         master.protocol("WM_DELETE_WINDOW", self.remove_listener_and_close)
 

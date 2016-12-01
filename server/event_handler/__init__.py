@@ -7,6 +7,7 @@ import server.event_handler.client_echo
 import server.event_handler.add_friend
 import server.event_handler.join_room
 import server.event_handler.create_room
+import server.event_handler.query_room_users
 from common.message import MessageType
 
 event_handler_map = {
@@ -18,6 +19,7 @@ event_handler_map = {
     MessageType.add_friend: add_friend,
     MessageType.join_room: join_room,
     MessageType.create_room: create_room,
+    MessageType.query_room_users: query_room_users,
 }
 
 

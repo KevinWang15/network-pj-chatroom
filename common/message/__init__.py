@@ -22,15 +22,19 @@ class MessageType(enum.IntEnum):
     # [username, password, nickname]
     register = 2
     client_echo = 3
+    # username:str
     add_friend = 4
     resolve_friend_request = 5
 
     # {target_type:int(0=私聊 1=群聊),target_id:int,message:str}
     send_message = 6
 
-    # id
+    # id:int
     join_room = 7
+    # name:str
     create_room = 8
+    # id:int
+    query_room_users = 9
 
     # === Server Action 101-200
     login_successful = 100
@@ -47,6 +51,9 @@ class MessageType(enum.IntEnum):
     # [target_type:int(0=私聊 1=群聊),target_id:int,message:str,sender_id:int,sender_name:str,time:int]
     on_new_message = 109
     server_kick = 110
+    query_room_users_result = 111
+    # [room_id, user_id, online]
+    room_user_on_off_line = 112
 
     # === Failure 201-300
     login_failed = 201
