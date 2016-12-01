@@ -62,19 +62,23 @@ class ChatForm(tk.Frame):
         time = datetime.datetime.fromtimestamp(
             int(data['time']) / 1000
         ).strftime('%Y-%m-%d %H:%M:%S')
-        self.append_to_chat_box(data['sender_name'] + "  " + time + '\n  ',
+        self.append_to_chat_box(data['sender_name'] + "  " + time + '\n',
                                 ('me' if client.memory.current_user['id'] == data[
                                     'sender_id'] else 'them'))
         # type 0 - 文字消息 1 - 图片消息
         if data['message']['type'] == 0:
             self.tag_i += 1
-            self.chat_box.tag_config('new' + str(self.tag_i), foreground=data['message']['fontcolor'],
+            self.chat_box.tag_config('new' + str(self.tag_i),
+                                     lmargin1=16,
+                                     lmargin2=16,
+                                     foreground=data['message']['fontcolor'],
                                      font=(None, data['message']['fontsize']))
-            self.append_to_chat_box(data['message']['data'].replace('\n', '\n  ') + '\n', 'new' + str(self.tag_i))
+            self.append_to_chat_box(data['message']['data'] + '\n',
+                                    'new' + str(self.tag_i))
         if data['message']['type'] == 1:
             pprint(['img crc', binascii.crc32(data['message']['data'])])
             client.memory.tk_img_ref.append(ImageTk.PhotoImage(data=data['message']['data']))
-            self.chat_box.image_create(END, image=client.memory.tk_img_ref[-1])
+            self.chat_box.image_create(END, image=client.memory.tk_img_ref[-1], padx=16, pady=5)
             self.append_to_chat_box('\n', '')
 
     def user_listbox_double_click(self, _):
