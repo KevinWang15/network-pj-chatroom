@@ -1,5 +1,5 @@
 from pprint import pprint
-from common.message import MessageType
+from common.message import MessageType, _serialize_dict
 from server.broadcast import broadcast
 import server.memory
 from common.util import md5
@@ -31,18 +31,21 @@ def run(sc, parameters):
 
         # 给发送方发回执
         message['target_id'] = parameters['target_id']
-        if user_id in user_id_to_sc:
-            user_id_to_sc[user_id].send(MessageType.on_new_message, message)
-        else:
-            # TODO: 增加未读消息数量
-            pprint('')
+        user_id_to_sc[user_id].send(MessageType.on_new_message, message)
+        database.add_to_chat_history(user_id, message['target_id'], message['target_type'],
+                                     _serialize_dict(message),
+                                     True)
 
         # 给接收方发消息，存入聊天记录
-        # TODO: 存入聊天记录
         message['target_id'] = user_id
-
+        sent = False
         if parameters['target_id'] in user_id_to_sc:
+            sent = True
             user_id_to_sc[parameters['target_id']].send(MessageType.on_new_message, message)
+
+        database.add_to_chat_history(parameters['target_id'], message['target_id'], message['target_type'],
+                                     _serialize_dict(message),
+                                     sent)
 
     if parameters['target_type'] == 1:
         # 群聊
@@ -55,8 +58,11 @@ def run(sc, parameters):
         users_id = database.get_room_members_id(parameters['target_id'])
 
         for user_id in users_id:
+            sent = False
             if user_id in user_id_to_sc:
                 user_id_to_sc[user_id].send(MessageType.on_new_message, message)
-            else:
-                # TODO: 增加未读消息数量
-                pprint('')
+                sent = True
+
+            database.add_to_chat_history(user_id, message['target_id'], message['target_type'],
+                                         _serialize_dict(message),
+                                         sent)

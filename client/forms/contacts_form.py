@@ -2,7 +2,7 @@ import _tkinter
 import tkinter as tk
 from distutils import command
 from tkinter import messagebox
-from common.message import MessageType
+from common.message import MessageType, _deserialize_any
 from pprint import pprint
 import client.memory
 import select
@@ -19,12 +19,33 @@ from tkinter import simpledialog
 
 
 class ContactsForm(tk.Frame):
+    bundle_process_done = False
+
     def remove_socket_listener_and_close(self):
         client.util.socket_listener.remove_listener(self.socket_listener)
         self.master.destroy()
         client.memory.tk_root.destroy()
 
     def socket_listener(self, data):
+        if data['type'] == MessageType.login_bundle:
+            bundle = data['parameters']
+            friends = bundle['friends']
+            rooms = bundle['rooms']
+            messages = bundle['messages']
+            for friend in friends:
+                self.handle_new_contact(friend)
+            for room in rooms:
+                self.handle_new_contact(room)
+            for item in messages:
+                # [[data:bytes,sent:int]]
+                sent = item[1]
+                message = _deserialize_any(item[0])
+                pprint(message)
+                client.util.socket_listener.digest_message(message, not sent)
+
+            self.bundle_process_done = True
+            self.refresh_contacts()
+
         if data['type'] == MessageType.incoming_friend_request:
             result = messagebox.askyesnocancel("好友请求", data['parameters']['nickname'] + "请求加您为好友，是否同意？(按Cancel为下次再询问)");
             if result == None:
@@ -32,10 +53,7 @@ class ContactsForm(tk.Frame):
             self.sc.send(MessageType.resolve_friend_request, [data['parameters']['id'], result])
 
         if data['type'] == MessageType.contact_info:
-            data['parameters']['last_timestamp'] = 0
-            data['parameters']['last_message'] = '(没有消息)'
-            self.contacts.insert(0, data['parameters'])
-            self.refresh_contacts()
+            self.handle_new_contact(data['parameters'])
             return
 
         if data['type'] == MessageType.add_friend_result:
@@ -46,15 +64,23 @@ class ContactsForm(tk.Frame):
             return
 
         if data['type'] == MessageType.friend_on_off_line:
+            pprint(['ggg', data['parameters'], self.contacts])
             friend_user_id = data['parameters'][1]
 
             for i in range(0, len(self.contacts)):
-                if self.contacts[i]['id'] == friend_user_id:
+                pprint(self.contacts[i])
+                if self.contacts[i]['id'] == friend_user_id and self.contacts[i]['type'] == 0:
                     self.contacts[i]['online'] = data['parameters'][0]
                     break
 
             self.refresh_contacts()
             return
+
+    def handle_new_contact(self, data):
+        data['last_timestamp'] = 0
+        data['last_message'] = '(没有消息)'
+        self.contacts.insert(0, data)
+        self.refresh_contacts()
 
     def on_frame_click(self, e):
         item_id = e.widget.item['id']
@@ -102,6 +128,9 @@ class ContactsForm(tk.Frame):
     pack_objs = []
 
     def refresh_contacts(self):
+        if not self.bundle_process_done:
+            return
+
         def compare(item1, item2):
             ts1 = client.memory.last_message_timestamp[item1['type']].get(item1['id'], 0)
             ts2 = client.memory.last_message_timestamp[item2['type']].get(item2['id'], 0)

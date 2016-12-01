@@ -108,3 +108,21 @@ def get_room_members(room_id):
     return list(map(lambda x: [x[0], x[1], x[0] in user_id_to_sc, x[2]], get_cursor().execute(
         'SELECT user_id,nickname,username FROM room_user LEFT JOIN users ON users.id=user_id WHERE room_id=?',
         [room_id]).fetchall()))
+
+
+def add_to_chat_history(user_id, target_id, target_type, data, sent):
+    c = get_cursor()
+    c.execute('INSERT INTO chat_history (user_id,target_id,target_type,data,sent) VALUES (?,?,?,?,?)',
+              [user_id, target_id, target_type, data, sent])
+    return c.lastrowid
+
+
+# [[data:bytes,sent:int]]
+def get_chat_history(user_id):
+    c = get_cursor()
+    ret = list(map(lambda x: [bytearray(x[0]), x[1]],
+                   c.execute('SELECT data,sent FROM chat_history WHERE user_id=?',
+                             [user_id]).fetchall()))
+    c = get_cursor()
+    c.execute('UPDATE chat_history SET sent=1 WHERE user_id=?', [user_id])
+    return ret

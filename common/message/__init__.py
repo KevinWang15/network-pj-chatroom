@@ -54,6 +54,7 @@ class MessageType(enum.IntEnum):
     query_room_users_result = 111
     # [room_id, user_id, online]
     room_user_on_off_line = 112
+    login_bundle = 113
 
     # === Failure 201-300
     login_failed = 201

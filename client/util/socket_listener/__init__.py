@@ -14,9 +14,7 @@ message_listeners = []
 
 
 def gen_last_message(obj):
-    # TODO: 群聊显示昵称
     # type 0 - 文字消息 1 - 图片消息
-
     prefix = ''
     if obj['target_type'] == 1:
         prefix = obj['sender_name'] + ':'
@@ -82,48 +80,46 @@ def socket_listener_thread(sc, tk_root):
 
                 # 处理on_new_message
                 if data['type'] == MessageType.on_new_message:
-
-                    # 放入 chat_history
-                    if data['parameters']['target_id'] not in client.memory.chat_history[
-                        data['parameters']['target_type']]:
-                        client.memory.chat_history[data['parameters']['target_type']][
-                            data['parameters']['target_id']] = []
-
-                    client.memory.chat_history[data['parameters']['target_type']][
-                        data['parameters']['target_id']].append(data['parameters'])
-
-                    # 更新 last_message
-                    client.memory.last_message[data['parameters']['target_type']][
-                        data['parameters']['target_id']] = gen_last_message(
-                        data['parameters'])
-
-                    # 更新 last_message_timestamp
-                    client.memory.last_message_timestamp[data['parameters']['target_type']][
-                        data['parameters']['target_id']] = data['parameters'][
-                        'time']
-
-                    # 更新 unread_message_count
-                    if data['parameters']['target_id'] not in client.memory.unread_message_count[
-                        data['parameters']['target_type']]:
-                        client.memory.unread_message_count[data['parameters']['target_type']][
-                            data['parameters']['target_id']] = 0
-
-                    if data['parameters']['target_id'] not in client.memory.window_instance[
-                        data['parameters']['target_type']]:
-                        client.memory.unread_message_count[data['parameters']['target_type']][
-                            data['parameters']['target_id']] += 1
-
-                    # 更新contacts
-                    client.memory.contact_window[0].refresh_contacts()
-
-                    # 通知聊天窗口
-                    for item in message_listeners:
-                        if item['target_type'] == data['parameters']['target_type'] and item['target_id'] == \
-                                data['parameters']['target_id']:
-                            item['func'](data['parameters'])
+                    digest_message(data['parameters'])
 
                 for func in callback_funcs:
                     func(data)
+
+
+def digest_message(data, update_unread_count=True):
+    # 放入 chat_history
+    if data['target_id'] not in client.memory.chat_history[
+        data['target_type']]:
+        client.memory.chat_history[data['target_type']][
+            data['target_id']] = []
+    client.memory.chat_history[data['target_type']][
+        data['target_id']].append(data)
+    # 更新 last_message
+    client.memory.last_message[data['target_type']][
+        data['target_id']] = gen_last_message(
+        data)
+    # 更新 last_message_timestamp
+    client.memory.last_message_timestamp[data['target_type']][
+        data['target_id']] = data[
+        'time']
+    # 更新 unread_message_count
+    if data['target_id'] not in client.memory.unread_message_count[
+        data['target_type']]:
+        client.memory.unread_message_count[data['target_type']][
+            data['target_id']] = 0
+    if data['target_id'] not in client.memory.window_instance[
+        data['target_type']]:
+        if update_unread_count:
+            client.memory.unread_message_count[data['target_type']][
+                data['target_id']] += 1
+
+    # 更新contacts
+    client.memory.contact_window[0].refresh_contacts()
+    # 通知聊天窗口
+    for item in message_listeners:
+        if item['target_type'] == data['target_type'] and item['target_id'] == \
+                data['target_id']:
+            item['func'](data)
 
 
 def add_listener(func):

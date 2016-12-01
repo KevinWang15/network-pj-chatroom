@@ -5,6 +5,7 @@ from server.util import database
 from server.util import add_target_type
 
 from server.memory import *
+from pprint import pprint
 
 
 def run(sc, parameters):
@@ -31,6 +32,15 @@ def run(sc, parameters):
     user = database.get_user(user_id)
     sc.send(MessageType.login_successful, user)
 
+    login_bundle = {}
+
+    # 发送群列表
+    rms = database.get_user_rooms(user_id)
+    login_bundle['rooms'] = list(map(lambda x: add_target_type(x, 1), rms))
+
+    # for rm in rms:
+    #     sc.send(MessageType.contact_info, add_target_type(rm, 1))
+
     # 发送好友请求
     frs = database.get_pending_friend_request(user_id)
 
@@ -39,9 +49,10 @@ def run(sc, parameters):
 
     # 发送好友列表
     frs = database.get_friends(user_id)
+    login_bundle['friends'] = list(map(lambda x: add_target_type(x, 0), frs))
 
     for fr in frs:
-        sc.send(MessageType.contact_info, add_target_type(fr, 0))
+        # sc.send(MessageType.contact_info, add_target_type(fr, 0))
         # 通知他的好友他上线了
         if fr['id'] in user_id_to_sc:
             user_id_to_sc[fr['id']].send(MessageType.friend_on_off_line, [True, user_id])
@@ -56,8 +67,5 @@ def run(sc, parameters):
                 user_id_to_sc[_user_id].send(MessageType.room_user_on_off_line,
                                              [room_id, user_id, True])
 
-    # 发送群列表
-    rms = database.get_user_rooms(user_id)
-
-    for rm in rms:
-        sc.send(MessageType.contact_info, add_target_type(rm, 1))
+    login_bundle['messages'] = database.get_chat_history(user_id)
+    sc.send(MessageType.login_bundle, login_bundle)
