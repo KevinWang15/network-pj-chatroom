@@ -146,7 +146,7 @@ class ContactsForm(tk.Frame):
         self.add_friend.pack(side=LEFT, expand=True, fill=X)
 
         self.add_room = Button(self.button_frame, text="添加群", command=self.on_add_room)
-        self.add_room.pack(side=LEFT, expand=False, fill=X)
+        self.add_room.pack(side=LEFT, expand=True, fill=X)
 
         self.button_frame.pack(expand=False, fill=X)
 

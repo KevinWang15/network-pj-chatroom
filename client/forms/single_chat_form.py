@@ -4,9 +4,14 @@ from tkinter import *
 import client.memory
 from client.util.socket_listener import *
 from tkinter.scrolledtext import ScrolledText
+from tkinter import colorchooser
+from tkinter import simpledialog
 
 
 class SingleChatForm(tk.Frame):
+    font_color = "#000000"
+    font_size = 10
+
     def remove_listener_and_close(self):
         remove_message_listener(self.message_listener)
         self.master.destroy()
@@ -41,14 +46,18 @@ class SingleChatForm(tk.Frame):
 
         self.input_textbox = ScrolledText(self, height=10)
         self.input_textbox.bind("<Control-Return>", self.send_message)
+        self.input_textbox.bind_all('<Key>', self.apply_font_change)
 
         self.send_btn = tk.Button(self.input_frame, text='发送消息(Ctrl+Enter)', command=self.send_message)
         self.send_btn.pack(side=RIGHT, expand=False)
 
-        self.font_btn = tk.Button(self.input_frame, text='修改字体')
+        self.font_btn = tk.Button(self.input_frame, text='字体颜色', command=self.choose_color)
         self.font_btn.pack(side=LEFT, expand=False)
 
-        self.image_btn = tk.Button(self.input_frame, text='发送图片')
+        self.font_btn = tk.Button(self.input_frame, text='字体大小', command=self.choose_font_size)
+        self.font_btn.pack(side=LEFT, expand=False)
+
+        self.image_btn = tk.Button(self.input_frame, text='发送图片', command=self.send_image)
         self.image_btn.pack(side=LEFT, expand=False)
 
         self.chat_box = ScrolledText(self, bg='#f6f6f6')
@@ -62,7 +71,7 @@ class SingleChatForm(tk.Frame):
         self.chat_box.tag_config("message", foreground="black", spacing1='0')
         self.chat_box.tag_config("system", foreground="grey", spacing1='0',
                                  justify='center',
-                                 font=("Times New Roman", 8))
+                                 font=(None, 8))
 
         self.pack(expand=True, fill=BOTH)
 
@@ -91,3 +100,21 @@ class SingleChatForm(tk.Frame):
                      {'target_type': 0, 'target_id': self.target_user['id'], 'message': message.strip().strip('\n')})
         self.input_textbox.delete("1.0", END)
         return 'break'
+
+    def choose_color(self):
+        _, self.font_color = colorchooser.askcolor(initialcolor=self.font_color)
+        self.apply_font_change(None)
+
+    def choose_font_size(self):
+        result = simpledialog.askinteger("设置", "请输入字体大小", initialvalue=self.font_size)
+        if result is None:
+            return
+        self.font_size = result
+        self.apply_font_change(None)
+
+    def apply_font_change(self, _):
+        self.input_textbox.tag_config('new', foreground=self.font_color, font=(None, self.font_size))
+        self.input_textbox.tag_add('new', '1.0', END)
+
+    def send_image(self):
+        pprint('1')
