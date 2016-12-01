@@ -12,6 +12,12 @@ callback_funcs = []
 message_listeners = []
 
 
+def gen_last_message(obj):
+    # type 0 - 文字消息 1 - 图片消息
+    if obj['type'] == 0:
+        return obj['data'].replace('\n', ' ')
+
+
 def socket_listener_thred(sc, tk_root):
     while True:
         rlist, wlist, xlist = select.select([sc.socket], [sc.socket], [])
@@ -41,7 +47,8 @@ def socket_listener_thred(sc, tk_root):
                     client.memory.chat_history[0][data['parameters']['target_id']].append(data['parameters'])
 
                     # 更新 last_message
-                    client.memory.last_message[0][data['parameters']['target_id']] = data['parameters']['message']
+                    client.memory.last_message[0][data['parameters']['target_id']] = gen_last_message(
+                        data['parameters']['message'])
 
                     # 更新 last_message_timestamp
                     client.memory.last_message_timestamp[0][data['parameters']['target_id']] = data['parameters'][

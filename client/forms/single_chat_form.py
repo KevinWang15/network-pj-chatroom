@@ -12,6 +12,8 @@ class SingleChatForm(tk.Frame):
     font_color = "#000000"
     font_size = 10
 
+    tag_i = 0
+
     def remove_listener_and_close(self):
         remove_message_listener(self.message_listener)
         self.master.destroy()
@@ -28,8 +30,12 @@ class SingleChatForm(tk.Frame):
         self.append_to_chat_box(data['sender_name'] + "  " + time + '\n  ',
                                 ('me' if client.memory.current_user['id'] == data[
                                     'sender_id'] else 'them'))
-        message = data['message'].replace('\n', '\n  ')
-        self.append_to_chat_box(message + '\n', 'message')
+        # type 0 - 文字消息 1 - 图片消息
+        if data['message']['type'] == 0:
+            self.tag_i += 1
+            self.chat_box.tag_config('new' + str(self.tag_i), foreground=data['message']['fontcolor'],
+                                     font=(None, data['message']['fontsize']))
+            self.append_to_chat_box(data['message']['data'].replace('\n', '\n  ') + '\n', 'new' + str(self.tag_i))
 
     def __init__(self, target_user, master=None):
         super().__init__(master)
@@ -60,7 +66,7 @@ class SingleChatForm(tk.Frame):
         self.image_btn = tk.Button(self.input_frame, text='发送图片', command=self.send_image)
         self.image_btn.pack(side=LEFT, expand=False)
 
-        self.chat_box = ScrolledText(self, bg='#f6f6f6')
+        self.chat_box = ScrolledText(self, bg='white')
         self.input_frame.pack(side=BOTTOM, fill=X, expand=False)
         self.input_textbox.pack(side=BOTTOM, fill=X, expand=False, padx=(0, 0), pady=(0, 0))
         self.chat_box.pack(side=BOTTOM, fill=BOTH, expand=True)
@@ -97,7 +103,14 @@ class SingleChatForm(tk.Frame):
         if not message or message.replace(" ", "").replace("\r", "").replace("\n", "") == '':
             return
         self.sc.send(MessageType.send_message,
-                     {'target_type': 0, 'target_id': self.target_user['id'], 'message': message.strip().strip('\n')})
+                     {'target_type': 0, 'target_id': self.target_user['id'],
+                      'message': {
+                          'type': 0,
+                          'data': message.strip().strip('\n'),
+                          'fontsize': self.font_size,
+                          'fontcolor': self.font_color
+                      }
+                      })
         self.input_textbox.delete("1.0", END)
         return 'break'
 
