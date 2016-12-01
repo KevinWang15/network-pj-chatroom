@@ -28,6 +28,10 @@ class MessageType(enum.IntEnum):
     # {target_type:int(0=私聊 1=群聊),target_id:int,message:str}
     send_message = 6
 
+    # id
+    join_room = 7
+    create_room = 8
+
     # === Server Action 101-200
     login_successful = 100
     register_successful = 101
@@ -49,6 +53,8 @@ class MessageType(enum.IntEnum):
     username_taken = 202
     # err_msg:str
     general_failure = 203
+    # msg:str
+    general_msg = 204
 
 
 def _get_message_type_from_value(value):

@@ -10,7 +10,7 @@ import _thread
 from tkinter import *
 from client.components.vertical_scrolled_frame import VerticalScrolledFrame
 from client.components.contact_item import ContactItem
-from client.forms.single_chat_form import SingleChatForm
+from client.forms.chat_form import ChatForm
 from tkinter import Toplevel
 import datetime
 import client.util.socket_listener
@@ -57,13 +57,13 @@ class ContactsForm(tk.Frame):
             return
 
     def on_frame_click(self, e):
-        user_id = e.widget.user['id']
-        if user_id in client.memory.window_instance_single:
-            # pprint(client.memory.window_instance_single[user_id])
-            client.memory.window_instance_single[user_id].master.deiconify()
+        item_id = e.widget.item['id']
+        if item_id in client.memory.window_instance[e.widget.item['type']]:
+            # pprint(client.memory.window_instance[0][item_id])
+            client.memory.window_instance[e.widget.item['type']][item_id].master.deiconify()
             return
         form = Toplevel(client.memory.tk_root, takefocus=True)
-        client.memory.window_instance_single[user_id] = SingleChatForm(e.widget.user, form)
+        client.memory.window_instance[e.widget.item['type']][item_id] = ChatForm(e.widget.item, form)
 
     def on_add_friend(self):
         result = simpledialog.askstring('添加好友', '请输入用户名')
@@ -72,7 +72,16 @@ class ContactsForm(tk.Frame):
         self.sc.send(MessageType.add_friend, result)
 
     def on_add_room(self):
-        pprint('11')
+        result = simpledialog.askinteger('添加群', '请输入群号')
+        if (not result):
+            return
+        self.sc.send(MessageType.join_room, result)
+
+    def on_create_room(self):
+        result = simpledialog.askstring('创建群', '请输入群名称')
+        if (not result):
+            return
+        self.sc.send(MessageType.create_room, result)
 
     pack_objs = []
 
@@ -98,11 +107,17 @@ class ContactsForm(tk.Frame):
         for item in self.contacts:
             contact = ContactItem(self.scroll.interior, self.on_frame_click)
             contact.pack(fill=BOTH, expand=True)
-            contact.user = item
+            contact.item = item
 
             contact.bind("<Button>", self.on_frame_click)
-            contact.title.config(text=item['nickname'] + (' (在线)' if item['online'] else ' (离线)'))
-            contact.title.config(fg='green' if item['online'] else '#999')
+            if (item['type'] == 0):
+                # 联系人
+                contact.title.config(text=item['nickname'] + (' (在线)' if item['online'] else ' (离线)'))
+                contact.title.config(fg='green' if item['online'] else '#999')
+            if (item['type'] == 1):
+                # 群
+                contact.title.config(text='[群:' + str(item['id']) + '] ' + item['room_name'])
+                contact.title.config(fg='blue')
 
             # contact.last_message.config(text=item['nickname'] + (' (在线)' if item['online'] else ' (离线)'))
 
@@ -146,6 +161,9 @@ class ContactsForm(tk.Frame):
 
         self.add_room = Button(self.button_frame, text="添加群", command=self.on_add_room)
         self.add_room.pack(side=LEFT, expand=True, fill=X)
+
+        self.create_room = Button(self.button_frame, text="创建群", command=self.on_create_room)
+        self.create_room.pack(side=LEFT, expand=True, fill=X)
 
         self.button_frame.pack(expand=False, fill=X)
 

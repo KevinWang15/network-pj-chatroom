@@ -5,6 +5,8 @@ import server.event_handler.register
 import server.event_handler.resolve_friend_request
 import server.event_handler.client_echo
 import server.event_handler.add_friend
+import server.event_handler.join_room
+import server.event_handler.create_room
 from common.message import MessageType
 
 event_handler_map = {
@@ -14,6 +16,8 @@ event_handler_map = {
     MessageType.resolve_friend_request: resolve_friend_request,
     MessageType.client_echo: client_echo,
     MessageType.add_friend: add_friend,
+    MessageType.join_room: join_room,
+    MessageType.create_room: create_room,
 }
 
 

@@ -67,7 +67,10 @@ def socket_listener_thread(sc, tk_root):
                 if data['type'] == MessageType.general_failure:
                     messagebox.showerror("出错了", data['parameters'])
 
-                # 处理general failure
+                # 处理general message
+                if data['type'] == MessageType.general_msg:
+                    messagebox.showinfo("消息", data['parameters'])
+
                 if data['type'] == MessageType.server_kick:
                     messagebox.showerror("出错了", '您的账户在别处登入')
                     client.memory.tk_root.destroy()
@@ -79,25 +82,25 @@ def socket_listener_thread(sc, tk_root):
                 if data['type'] == MessageType.on_new_message:
 
                     # 放入 chat_history
-                    if data['parameters']['target_id'] not in client.memory.chat_history[0]:
-                        client.memory.chat_history[0][data['parameters']['target_id']] = []
+                    if data['parameters']['target_id'] not in client.memory.chat_history[data['parameters']['target_type']]:
+                        client.memory.chat_history[data['parameters']['target_type']][data['parameters']['target_id']] = []
 
-                    client.memory.chat_history[0][data['parameters']['target_id']].append(data['parameters'])
+                    client.memory.chat_history[data['parameters']['target_type']][data['parameters']['target_id']].append(data['parameters'])
 
                     # 更新 last_message
-                    client.memory.last_message[0][data['parameters']['target_id']] = gen_last_message(
+                    client.memory.last_message[data['parameters']['target_type']][data['parameters']['target_id']] = gen_last_message(
                         data['parameters']['message'])
 
                     # 更新 last_message_timestamp
-                    client.memory.last_message_timestamp[0][data['parameters']['target_id']] = data['parameters'][
+                    client.memory.last_message_timestamp[data['parameters']['target_type']][data['parameters']['target_id']] = data['parameters'][
                         'time']
 
                     # 更新 unread_message_count
-                    if data['parameters']['target_id'] not in client.memory.unread_message_count[0]:
-                        client.memory.unread_message_count[0][data['parameters']['target_id']] = 0
+                    if data['parameters']['target_id'] not in client.memory.unread_message_count[data['parameters']['target_type']]:
+                        client.memory.unread_message_count[data['parameters']['target_type']][data['parameters']['target_id']] = 0
 
-                    if data['parameters']['target_id'] not in client.memory.window_instance_single:
-                        client.memory.unread_message_count[0][data['parameters']['target_id']] += 1
+                    if data['parameters']['target_id'] not in client.memory.window_instance[data['parameters']['target_type']]:
+                        client.memory.unread_message_count[data['parameters']['target_type']][data['parameters']['target_id']] += 1
 
                     # 更新contacts
                     client.memory.contact_window[0].refresh_contacts()

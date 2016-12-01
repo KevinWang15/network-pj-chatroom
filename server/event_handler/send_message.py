@@ -33,6 +33,9 @@ def run(sc, parameters):
         message['target_id'] = parameters['target_id']
         if user_id in user_id_to_sc:
             user_id_to_sc[user_id].send(MessageType.on_new_message, message)
+        else:
+            # TODO: 增加未读消息数量
+            pprint('')
 
         # 给接收方发消息，存入聊天记录
         # TODO: 存入聊天记录
@@ -43,24 +46,17 @@ def run(sc, parameters):
 
     if parameters['target_type'] == 1:
         # 群聊
-        pprint('')
+        message['target_id'] = parameters['target_id']
 
-        # TODO: 检测群所属关系
+        if not database.in_room(user_id, parameters['target_id']):
+            sc.send(MessageType.general_failure, '还没有加入该群')
+            return
 
-        # if parameters['target_user_id'] == '':
-        #     broadcast(MessageType.on_new_message,
-        #               message)
-        #     # push to chat history
-        #     message['sender_nickname'] = user_id_mappings['nickname'][sender_user_id]
-        #     server.memory.chat_history.append(message)
-        # else:
-        #     target_user_id = int(parameters['target_user_id'])
-        #     user_id_mappings['sc'][target_user_id].send(MessageType.on_new_message,
-        #                                                 message)
-        #     sc.send(MessageType.on_new_message,
-        #             message)
-        #
-        # if len(server.memory.chat_history) > 30:
-        #     server.memory.chat_history = server.memory.chat_history[len(server.memory.chat_history) - 30:]
-        #
-        # pprint(server.memory.chat_history)
+        users_id = database.get_room_members_id(parameters['target_id'])
+
+        for user_id in users_id:
+            if user_id in user_id_to_sc:
+                user_id_to_sc[user_id].send(MessageType.on_new_message, message)
+            else:
+                # TODO: 增加未读消息数量
+                pprint('')

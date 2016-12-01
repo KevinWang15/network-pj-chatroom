@@ -12,7 +12,7 @@ from io import BytesIO
 import binascii
 
 
-class SingleChatForm(tk.Frame):
+class ChatForm(tk.Frame):
     font_color = "#000000"
     font_size = 10
 
@@ -21,8 +21,8 @@ class SingleChatForm(tk.Frame):
     def remove_listener_and_close(self):
         remove_message_listener(self.message_listener)
         self.master.destroy()
-        if self.target_user['id'] in client.memory.window_instance_single:
-            del client.memory.window_instance_single[self.target_user['id']]
+        if self.target['id'] in client.memory.window_instance[self.target['type']]:
+            del client.memory.window_instance[self.target['type']][self.target['id']]
 
     def message_listener(self, data):
         self.digest_message(data)
@@ -46,16 +46,21 @@ class SingleChatForm(tk.Frame):
             self.chat_box.image_create(END, image=client.memory.tk_img_ref[-1])
             self.append_to_chat_box('\n', '')
 
-    def __init__(self, target_user, master=None):
+    def __init__(self, target, master=None):
         super().__init__(master)
         self.master = master
-        self.target_user = target_user
-        client.memory.unread_message_count[0][self.target_user['id']] = 0
+        self.target = target
+        client.memory.unread_message_count[self.target['type']][self.target['id']] = 0
         client.memory.contact_window[0].refresh_contacts()
         master.resizable(width=True, height=True)
         master.geometry('660x500')
         master.minsize(520, 370)
-        self.master.title(target_user['nickname'])
+
+        if self.target['type'] == 0:
+            self.master.title(self.target['nickname'])
+
+        if self.target['type'] == 1:
+            self.master.title("群:" + str(self.target['id']) + " " + self.target['room_name'])
 
         self.input_frame = tk.Frame(self, bg='white')
 
@@ -91,12 +96,12 @@ class SingleChatForm(tk.Frame):
         self.pack(expand=True, fill=BOTH)
 
         self.sc = client.memory.sc
-        add_message_listener(0, self.target_user['id'], self.message_listener)
+        add_message_listener(self.target['type'], self.target['id'], self.message_listener)
         master.protocol("WM_DELETE_WINDOW", self.remove_listener_and_close)
 
         # 历史消息显示
-        if target_user['id'] in client.memory.chat_history[0]:
-            for msg in client.memory.chat_history[0][target_user['id']]:
+        if target['id'] in client.memory.chat_history[self.target['type']]:
+            for msg in client.memory.chat_history[self.target['type']][target['id']]:
                 self.digest_message(msg)
 
             self.append_to_chat_box('- 以上是历史消息 -\n', 'system')
@@ -111,7 +116,7 @@ class SingleChatForm(tk.Frame):
         if not message or message.replace(" ", "").replace("\r", "").replace("\n", "") == '':
             return
         self.sc.send(MessageType.send_message,
-                     {'target_type': 0, 'target_id': self.target_user['id'],
+                     {'target_type': self.target['type'], 'target_id': self.target['id'],
                       'message': {
                           'type': 0,
                           'data': message.strip().strip('\n'),
@@ -134,8 +139,11 @@ class SingleChatForm(tk.Frame):
         self.apply_font_change(None)
 
     def apply_font_change(self, _):
-        self.input_textbox.tag_config('new', foreground=self.font_color, font=(None, self.font_size))
-        self.input_textbox.tag_add('new', '1.0', END)
+        try:
+            self.input_textbox.tag_config('new', foreground=self.font_color, font=(None, self.font_size))
+            self.input_textbox.tag_add('new', '1.0', END)
+        except Exception:
+            pprint('')
 
     def send_image(self):
         filename = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg;*.gif;*.png")])
@@ -146,4 +154,5 @@ class SingleChatForm(tk.Frame):
             b = bytearray(f)
 
             self.sc.send(MessageType.send_message,
-                         {'target_type': 0, 'target_id': self.target_user['id'], 'message': {'type': 1, 'data': b}})
+                         {'target_type': self.target['type'], 'target_id': self.target['id'],
+                          'message': {'type': 1, 'data': b}})

@@ -2,8 +2,7 @@ current_user = {"id": 0, "nickname": ""}
 sc = None
 tk_root = None
 
-window_instance_single = {}
-window_instance_room = {}
+window_instance = [{}, {}]
 contact_window = []
 
 # chat_history[target_type][target_id] =
