@@ -1,15 +1,14 @@
-import os
 import math
+import os
+import socket
 import struct
 
 from Crypto.Cipher import AES
-import socket
 
 from common.config import get_config
-from common.util import long_to_bytes
 from common.cryptography import crypt
-from pprint import pprint
-from common.message import serialize_message, deserialize_message, MessageType
+from common.message import serialize_message, deserialize_message
+from common.util import long_to_bytes
 
 
 # Format of message transmitted through Secure Channel

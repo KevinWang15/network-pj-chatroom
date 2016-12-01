@@ -4,43 +4,55 @@ import socket
 from pprint import pprint
 
 from common.util import long_to_bytes
-from enum import Enum
+import enum
 from struct import pack, unpack
 
 
 # 每个序列化片段的格式：
 # |--VAR_TYPE(1 Byte)--|--DATA_LEN(4 Bytes)--|--DATA--|
 
-class MessageType(Enum):
-    set_user_name = 1
-    set_name_successful = 2
-    notify_online_user_list = 3
-    notify_chat_history = 4
-    send_message = 5
-    on_new_message = 6
-    on_user_offline = 7
-    on_user_online = 8
-    server_notification = 9
-    chat_history_bundle = 10
+# |-- 4 Byte messageType --|-- Array of parameters --|
+# for each item in array of params
+# |-- 1 Byte Type of params --|-- 4 Bytes Length of body --|-- N Byte Body--|
 
-    err_nickname_taken = 101
+class MessageType(enum.IntEnum):
+    # === Client Action 1-100
+    # [username, password]
+    login = 1
+    # [username, password, nickname]
+    register = 2
+    client_echo = 3
+    add_friend = 4
+    resolve_friend_request = 5
+
+    # {target_type:int(0=私聊 1=群聊),target_id:int,message:str}
+    send_message = 6
+
+    # === Server Action 101-200
+    login_successful = 100
+    register_successful = 101
+    incoming_friend_request = 102
+    contact_info = 103
+    chat_history = 104
+    server_echo = 105
+    # [successful:bool,err_msg:str]
+    add_friend_result = 106
+    # [online:bool,friend_user_id:int]
+    friend_on_off_line = 107
+    notify_chat_history = 108
+    # [target_type:int(0=私聊 1=群聊),target_id:int,message:str,sender_id:int,sender_name:str,time:int]
+    on_new_message = 109
+    server_kick = 110
+
+    # === Failure 201-300
+    login_failed = 201
+    username_taken = 202
+    # err_msg:str
+    general_failure = 203
 
 
 def _get_message_type_from_value(value):
-    return {
-        1: MessageType.set_user_name,
-        2: MessageType.set_name_successful,
-        3: MessageType.notify_online_user_list,
-        4: MessageType.notify_chat_history,
-        5: MessageType.send_message,
-        6: MessageType.on_new_message,
-        7: MessageType.on_user_offline,
-        8: MessageType.on_user_online,
-        9: MessageType.server_notification,
-        10: MessageType.chat_history_bundle,
-
-        101: MessageType.err_nickname_taken,
-    }[value]
+    return MessageType(value)
 
 
 VAR_TYPE = {
@@ -48,7 +60,8 @@ VAR_TYPE = {
     2: 'float',
     3: 'str',
     4: 'list',
-    5: 'dict'
+    5: 'dict',
+    6: 'bool',
 }
 
 VAR_TYPE_INVERSE = {
@@ -57,12 +70,18 @@ VAR_TYPE_INVERSE = {
     'str': 3,
     'list': 4,
     'dict': 5,
+    'bool': 6,
 }
 
 
 def _serialize_int(int):
     body = long_to_bytes(int)
     return bytes([VAR_TYPE_INVERSE['int']]) + pack('L', len(body)) + body
+
+
+def _serialize_bool(value):
+    body = value
+    return bytes([VAR_TYPE_INVERSE['bool']]) + pack('L', 1) + bytes([1 if value else 0])
 
 
 def _serialize_float(float):
@@ -101,7 +120,8 @@ def _serialize_dict(dict):
     return bytes([VAR_TYPE_INVERSE['dict']]) + pack('L', len(body)) + body
 
 
-_serialize_by_type = [None, _serialize_int, _serialize_float, _serialize_str, _serialize_list, _serialize_dict]
+_serialize_by_type = [None, _serialize_int, _serialize_float, _serialize_str, _serialize_list, _serialize_dict,
+                      _serialize_bool]
 
 
 def _serialize_any(obj):
@@ -119,6 +139,10 @@ def serialize_message(message_type, parameters):
 
 def _deserialize_int(bytes):
     return int.from_bytes(bytes, 'big')
+
+
+def _deserialize_bool(value):
+    return True if value[0] else False
 
 
 def _deserialize_float(bytes):
@@ -159,7 +183,7 @@ def _deserialize_dict(bytes):
 
 
 _deserialize_by_type = [None, _deserialize_int, _deserialize_float, _deserialize_str, _deserialize_list,
-                        _deserialize_dict]
+                        _deserialize_dict, _deserialize_bool]
 
 
 def _deserialize_any(bytes):

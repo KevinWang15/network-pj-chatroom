@@ -4,9 +4,10 @@ from common.transmission.secure_channel import establish_secure_channel_to_serve
 from tkinter import messagebox
 from common.message import MessageType
 from pprint import pprint
-from client.memory import user_list
+
 from client.memory import current_user
 from tkinter import scrolledtext
+from client.memory import sc
 
 import select
 import _thread
@@ -65,13 +66,13 @@ class ChatForm(tk.Frame):
 
     def socket_reader(self):
         while True:
-            rlist, wlist, xlist = select.select([self.sc.socket], [self.sc.socket], [])
+            rlist, wlist, xlist = select.select([sc.socket], [sc.socket], [])
 
             if (self.should_exit):
                 return
 
             if len(rlist):
-                data = self.sc.recv()
+                data = sc.recv()
                 if data:
                     # pprint(data)
 
@@ -127,11 +128,10 @@ class ChatForm(tk.Frame):
                     # messagebox.showerror("出错了", "服务器已经被关闭")
                     self.master.destroy()
 
-    def __init__(self, sc, master=None):
+    def __init__(self, master=None):
         super().__init__(master)
         self.pack()
         self.master = master
-        self.sc = sc
         self.master.title("聊天室 - " + current_user['nickname'])
         master.resizable(width=True, height=True)
         master.geometry('660x500')
@@ -149,7 +149,7 @@ class ChatForm(tk.Frame):
         target_user_id = ""
         if selected_user:
             target_user_id = str(selected_user['id'])
-        self.sc.send(MessageType.send_message, {'target_user_id': target_user_id, 'data': message})
+        sc.send(MessageType.send_message, {'target_user_id': target_user_id, 'data': message})
         self.input_text.set("")
         return 'break'
 

@@ -1,32 +1,22 @@
-user_id_mappings = {
-    'sc': {},
-    'nickname': {}
-}
+sc_to_user_id = {}
+user_id_to_sc = {}
+socket_to_sc = {}
 
-socket_mappings = {
-    "user_id": {},
-    "nickname": {},
-    'sc': {}
-}
+# 不一定是登入状态，只是连接
+scs = []
 
-connections = []
 chat_history = []
-user_id_incr = 1
 
 
-def remove_from_socket_mapping(socket):
-    for key, value in socket_mappings.items():
-        if (socket in socket_mappings[key]):
-            del socket_mappings[key][socket]
+def remove_sc_from_socket_mapping(sc):
+    if sc in sc_to_user_id:
+        uid = sc_to_user_id[sc]
+        del sc_to_user_id[sc]
+        if uid in user_id_to_sc:
+            del user_id_to_sc[uid]
 
+    if sc in scs:
+        scs.remove(sc)
 
-def get_online_users():
-    users = []
-    for key, value in socket_mappings['user_id'].items():
-        user_id = value
-        if not key in socket_mappings['nickname']:
-            continue
-        nickname = socket_mappings['nickname'][key]
-        users.append({"nickname": nickname, 'id': user_id})
-
-    return users
+    if sc.socket in socket_to_sc:
+        del socket_to_sc[sc.socket]

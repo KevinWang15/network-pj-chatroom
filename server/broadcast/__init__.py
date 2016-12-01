@@ -1,9 +1,6 @@
-import socket
-from pprint import pprint
-from common.message import MessageType
-from server.memory import socket_mappings, connections
+from server.memory import *
 
 
 def broadcast(message_type, parameters):
-    for connection in connections:
-        socket_mappings['sc'][connection].send(message_type, parameters)
+    for sc in scs:
+        sc.send(message_type, parameters)

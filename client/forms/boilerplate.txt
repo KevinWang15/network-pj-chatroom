@@ -4,8 +4,6 @@ from tkinter import messagebox
 from common.message import MessageType
 from pprint import pprint
 import client.memory
-from client.forms.register_form import RegisterForm
-from client.forms.contacts_form import ContactsForm
 import select
 import _thread
 from tkinter import *
@@ -13,12 +11,13 @@ from tkinter import Toplevel
 import client.util.socket_listener
 
 
-class LoginForm(tk.Frame):
+class ContactsForm(tk.Frame):
     def remove_socket_listener_and_close(self):
         client.util.socket_listener.remove_listener(self.socket_listener)
         self.master.destroy()
 
     def socket_listener(self, data):
+        pprint("socket listener function in login form")
         if data['type'] == MessageType.login_failed:
             messagebox.showerror('登入失败', '登入失败，请检查用户名密码')
             return
@@ -26,10 +25,8 @@ class LoginForm(tk.Frame):
         if data['type'] == MessageType.login_successful:
             client.memory.current_user = data['parameters']
             self.remove_socket_listener_and_close()
-
-            contacts = Toplevel(client.memory.tk_root, takefocus=True)
+            contacts = Toplevel()
             ContactsForm(contacts)
-
             return
 
     def __init__(self, master=None):
@@ -54,28 +51,18 @@ class LoginForm(tk.Frame):
         self.logbtn = Button(self.buttonframe, text="登入", command=self.do_login)
         self.logbtn.grid(row=0, column=0)
 
-        self.registerbtn = Button(self.buttonframe, text="注册", command=self.show_register)
+        self.registerbtn = Button(self.buttonframe, text="注册", command=self.do_login)
         self.registerbtn.grid(row=0, column=1)
 
         self.pack()
         self.master.title("聊天室")
 
         self.sc = client.memory.sc
-        self.sc.send(MessageType.client_echo, 0)
         client.util.socket_listener.add_listener(self.socket_listener)
+        master.protocol("WM_DELETE_WINDOW", self.remove_socket_listener_and_close)
 
     def do_login(self):
         username = self.username.get()
         password = self.password.get()
-        if not username:
-            messagebox.showerror("出错了", "用户名不能为空")
-            return
-        if not password:
-            messagebox.showerror("出错了", "密码不能为空")
-            return
 
         self.sc.send(MessageType.login, [username, password])
-
-    def show_register(self):
-        register_form = Toplevel()
-        RegisterForm(register_form)
