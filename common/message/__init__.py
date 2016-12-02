@@ -36,6 +36,8 @@ class MessageType(enum.IntEnum):
     # id:int
     query_room_users = 9
 
+    bad = 10
+
     # === Server Action 101-200
     login_successful = 100
     register_successful = 101

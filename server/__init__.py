@@ -11,6 +11,8 @@ import select
 from server.util import database
 from pprint import pprint
 import struct
+import sys
+import traceback
 
 
 def run():
@@ -92,7 +94,11 @@ def run():
                 # 当一个数据包接收完毕
                 bytes_to_receive[sc] = 0
                 bytes_received[sc] = 0
-
-                data = sc.on_data(data_buffer[sc])
-                handle_event(sc, data['type'], data['parameters'])
+                try:
+                    data = sc.on_data(data_buffer[sc])
+                    handle_event(sc, data['type'], data['parameters'])
+                except:
+                    pprint(sys.exc_info())
+                    traceback.print_exc(file=sys.stdout)
+                    pass
                 data_buffer[sc] = bytes()

@@ -40,7 +40,6 @@ class ContactsForm(tk.Frame):
                 # [[data:bytes,sent:int]]
                 sent = item[1]
                 message = _deserialize_any(item[0])
-                pprint(message)
                 client.util.socket_listener.digest_message(message, not sent)
 
             self.bundle_process_done = True
@@ -64,11 +63,9 @@ class ContactsForm(tk.Frame):
             return
 
         if data['type'] == MessageType.friend_on_off_line:
-            pprint(['ggg', data['parameters'], self.contacts])
             friend_user_id = data['parameters'][1]
 
             for i in range(0, len(self.contacts)):
-                pprint(self.contacts[i])
                 if self.contacts[i]['id'] == friend_user_id and self.contacts[i]['type'] == 0:
                     self.contacts[i]['online'] = data['parameters'][0]
                     break

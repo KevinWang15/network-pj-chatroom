@@ -41,7 +41,6 @@ class ChatForm(tk.Frame):
             # [room_id, user_id, online]
             if data['parameters'][0] != self.target['id']:
                 return
-            pprint(data['parameters'])
             for i in range(0, len(self.user_list)):
                 if self.user_list[i][0] == data['parameters'][1]:
                     self.user_list[i][2] = data['parameters'][2]
@@ -51,7 +50,6 @@ class ChatForm(tk.Frame):
     def refresh_user_listbox(self):
         # [id, nickname, online, username]
         self.user_listbox.delete(0, END)
-        pprint(self.user_list)
         self.user_list.sort(key=lambda x: x[2])
 
         for user in self.user_list:
@@ -76,7 +74,6 @@ class ChatForm(tk.Frame):
             self.append_to_chat_box(data['message']['data'] + '\n',
                                     'new' + str(self.tag_i))
         if data['message']['type'] == 1:
-            pprint(['img crc', binascii.crc32(data['message']['data'])])
             client.memory.tk_img_ref.append(ImageTk.PhotoImage(data=data['message']['data']))
             self.chat_box.image_create(END, image=client.memory.tk_img_ref[-1], padx=16, pady=5)
             self.append_to_chat_box('\n', '')
@@ -201,8 +198,8 @@ class ChatForm(tk.Frame):
         try:
             self.input_textbox.tag_config('new', foreground=self.font_color, font=(None, self.font_size))
             self.input_textbox.tag_add('new', '1.0', END)
-        except Exception:
-            pprint('')
+        except:
+            pass
 
     def send_image(self):
         filename = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg;*.gif;*.png")])

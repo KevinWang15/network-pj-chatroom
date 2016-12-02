@@ -6,6 +6,8 @@ import datetime
 import time
 import client.memory
 import struct
+import sys
+import traceback
 
 callback_funcs = []
 
@@ -62,28 +64,34 @@ def socket_listener_thread(sc, tk_root):
                 bytes_to_receive = 0
                 bytes_received = 0
 
-                data = sc.on_data(data_buffer)
-                # 处理general failure
-                if data['type'] == MessageType.general_failure:
-                    messagebox.showerror("出错了", data['parameters'])
+                try:
+                    data = sc.on_data(data_buffer)
+                    # 处理general failure
+                    if data['type'] == MessageType.general_failure:
+                        messagebox.showerror("出错了", data['parameters'])
 
-                # 处理general message
-                if data['type'] == MessageType.general_msg:
-                    messagebox.showinfo("消息", data['parameters'])
+                    # 处理general message
+                    if data['type'] == MessageType.general_msg:
+                        messagebox.showinfo("消息", data['parameters'])
 
-                if data['type'] == MessageType.server_kick:
-                    messagebox.showerror("出错了", '您的账户在别处登入')
-                    client.memory.tk_root.destroy()
+                    if data['type'] == MessageType.server_kick:
+                        messagebox.showerror("出错了", '您的账户在别处登入')
+                        client.memory.tk_root.destroy()
 
-                if data['type'] == MessageType.server_echo:
-                    pprint(['server echo', data['parameters']])
+                    if data['type'] == MessageType.server_echo:
+                        pprint(['server echo', data['parameters']])
 
-                # 处理on_new_message
-                if data['type'] == MessageType.on_new_message:
-                    digest_message(data['parameters'])
+                    # 处理on_new_message
+                    if data['type'] == MessageType.on_new_message:
+                        digest_message(data['parameters'])
 
-                for func in callback_funcs:
-                    func(data)
+                    for func in callback_funcs:
+                        func(data)
+
+                except:
+                    pprint(sys.exc_info())
+                    traceback.print_exc(file=sys.stdout)
+                    pass
 
 
 def digest_message(data, update_unread_count=True):

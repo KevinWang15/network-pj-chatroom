@@ -17,7 +17,6 @@ class ContactsForm(tk.Frame):
         self.master.destroy()
 
     def socket_listener(self, data):
-        pprint("socket listener function in login form")
         if data['type'] == MessageType.login_failed:
             messagebox.showerror('登入失败', '登入失败，请检查用户名密码')
             return
