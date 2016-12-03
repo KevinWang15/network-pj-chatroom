@@ -39,7 +39,7 @@ class SecureChannel:
         # pprint(['sending', self.socket, message_type, parameters])
 
         self.socket.send(
-            struct.pack('L', length_of_encrypted_message) + bytes([padding_n]) + iv1 + encrypted_message)
+            struct.pack('!L', length_of_encrypted_message) + bytes([padding_n]) + iv1 + encrypted_message)
         return
 
     def on_data(self, data_array):

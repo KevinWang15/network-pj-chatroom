@@ -96,6 +96,7 @@ class ChatForm(tk.Frame):
         super().__init__(master)
         self.master = master
         self.target = target
+        self.user_listbox = tk.Listbox(self, bg='#EEE')
         client.util.socket_listener.add_listener(self.socket_listener)
         client.memory.unread_message_count[self.target['type']][self.target['id']] = 0
         client.memory.contact_window[0].refresh_contacts()
@@ -113,7 +114,6 @@ class ChatForm(tk.Frame):
 
         self.right_frame = tk.Frame(self, bg='white')
 
-        self.user_listbox = tk.Listbox(self, bg='#EEE')
         self.user_listbox.bind('<Double-Button-1>', self.user_listbox_double_click)
         if self.target['type'] == 1:
             self.user_listbox.pack(side=LEFT, expand=False, fill=BOTH)
@@ -202,7 +202,10 @@ class ChatForm(tk.Frame):
             pass
 
     def send_image(self):
-        filename = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg;*.gif;*.png")])
+        filename = filedialog.askopenfilename(filetypes=[("Image Files",
+                                                          ["*.jpg", "*.jpeg", "*.png", "*.gif", "*.JPG", "*.JPEG",
+                                                           "*.PNG", "*.GIF"]),
+                                                         ("All Files", ["*.*"])])
         if filename is None or filename == '':
             return
         with open(filename, "rb") as imageFile:

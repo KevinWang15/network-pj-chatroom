@@ -18,6 +18,7 @@ import traceback
 def run():
     config = get_config()
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((config['server']['bind_ip'], config['server']['bind_port']))
     s.listen(1)
 
@@ -84,7 +85,7 @@ def run():
 
                 else:
                     data_buffer[sc] = bytes()
-                    bytes_to_receive[sc] = struct.unpack('L', first_4_bytes)[0] + 16 + 1
+                    bytes_to_receive[sc] = struct.unpack('!L', first_4_bytes)[0] + 16 + 1
 
             buffer = sc.socket.recv(bytes_to_receive[sc] - bytes_received[sc])
             data_buffer[sc] += buffer

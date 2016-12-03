@@ -52,7 +52,7 @@ def socket_listener_thread(sc, tk_root):
                     tk_root.destroy()
                 else:
                     data_buffer = bytes()
-                    bytes_to_receive = struct.unpack('L', first_4_bytes)[0] + 16 + 1
+                    bytes_to_receive = struct.unpack('!L', first_4_bytes)[0] + 16 + 1
 
             # 接收数据、拼成块
             buffer = sc.socket.recv(bytes_to_receive - bytes_received)

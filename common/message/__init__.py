@@ -94,26 +94,26 @@ VAR_TYPE_INVERSE = {
 
 def _serialize_int(int):
     body = long_to_bytes(int)
-    return bytes([VAR_TYPE_INVERSE['int']]) + pack('L', len(body)) + body
+    return bytes([VAR_TYPE_INVERSE['int']]) + pack('!L', len(body)) + body
 
 
 def _serialize_bool(value):
     body = value
-    return bytes([VAR_TYPE_INVERSE['bool']]) + pack('L', 1) + bytes([1 if value else 0])
+    return bytes([VAR_TYPE_INVERSE['bool']]) + pack('!L', 1) + bytes([1 if value else 0])
 
 
 def _serialize_float(float):
     body = pack('f', float)
-    return bytes([VAR_TYPE_INVERSE['float']]) + pack('L', len(body)) + body
+    return bytes([VAR_TYPE_INVERSE['float']]) + pack('!L', len(body)) + body
 
 
 def _serialize_str(str):
     body = str.encode()
-    return bytes([VAR_TYPE_INVERSE['str']]) + pack('L', len(body)) + body
+    return bytes([VAR_TYPE_INVERSE['str']]) + pack('!L', len(body)) + body
 
 
 def _serialize_bytes(body):
-    return bytes([VAR_TYPE_INVERSE['bytearray']]) + pack('L', len(body)) + body
+    return bytes([VAR_TYPE_INVERSE['bytearray']]) + pack('!L', len(body)) + body
 
 
 def _serialize_list(list):
@@ -121,7 +121,7 @@ def _serialize_list(list):
     body = bytearray()
     for i in range(0, len(list)):
         body += _serialize_any(list[i])
-    return bytes([VAR_TYPE_INVERSE['list']]) + pack('L', len(body)) + body
+    return bytes([VAR_TYPE_INVERSE['list']]) + pack('!L', len(body)) + body
 
 
 def _serialize_dict(dict):
@@ -139,7 +139,7 @@ def _serialize_dict(dict):
         body += str.encode(item_key)
         body += item_body
 
-    return bytes([VAR_TYPE_INVERSE['dict']]) + pack('L', len(body)) + body
+    return bytes([VAR_TYPE_INVERSE['dict']]) + pack('!L', len(body)) + body
 
 
 _serialize_by_type = [None, _serialize_int, _serialize_float, _serialize_str, _serialize_list, _serialize_dict,
@@ -168,7 +168,7 @@ def _deserialize_bool(value):
 
 
 def _deserialize_float(bytes):
-    return unpack('f', bytes)[0]
+    return unpack('!f', bytes)[0]
 
 
 def _deserialize_str(bytes):
@@ -185,7 +185,7 @@ def _deserialize_list(bytes):
     ret = []
     while (not byte_reader.empty()):
         body_type = byte_reader.read(1)[0]
-        body = byte_reader.read(int.from_bytes(byte_reader.read(4), byteorder='little'))
+        body = byte_reader.read(int.from_bytes(byte_reader.read(4), byteorder='big'))
         body = _deserialize_by_type[body_type](body)
         ret.append(body)
     return ret
@@ -202,7 +202,7 @@ def _deserialize_dict(bytes):
         key = byte_reader.read(len_key[0])
 
         body_type = byte_reader.read(1)[0]
-        body = byte_reader.read(int.from_bytes(byte_reader.read(4), byteorder='little'))
+        body = byte_reader.read(int.from_bytes(byte_reader.read(4), byteorder='big'))
         body = _deserialize_by_type[body_type](body)
         ret[key.decode()] = body
     return ret
